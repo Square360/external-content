@@ -1,0 +1,34 @@
+som_api_integration.external_content.*:
+  type: config_entity
+  label: 'External Content'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    resource:
+      type: string
+      label: 'Resource'
+    term_field:
+      type: string
+      label: 'Term Field'
+    includes:
+      type: string
+      label: 'Includes'
+field.field_settings.external_content_item:
+  type: mapping
+  label: ExternalContentItem field settings
+  mapping:
+    bar:
+      type: string
+      label: Bar
+
+field.value.external_content_item:
+  type: mapping
+  label: Default value
+  mapping:
+    value:
+      type: label
+      label: Value

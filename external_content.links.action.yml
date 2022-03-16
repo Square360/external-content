@@ -1,0 +1,5 @@
+entity.external_content.add_form:
+  route_name: 'entity.external_content.add_form'
+  title: 'Add external_content'
+  appears_on:
+    - entity.external_content.collection

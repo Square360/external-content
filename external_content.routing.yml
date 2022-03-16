@@ -1,0 +1,32 @@
+
+entity.external_content.collection:
+  path: '/admin/config/system/external_content'
+  defaults:
+    _entity_list: 'external_content'
+    _title: 'External Content Configuration'
+  requirements:
+    _permission: 'administer site configuration'
+
+entity.external_content.add_form:
+  path: '/admin/config/system/external_content/add'
+  defaults:
+    _entity_form: 'external_content.add'
+    _title: 'Add external_content'
+  requirements:
+    _permission: 'administer site configuration'
+
+entity.external_content.edit_form:
+  path: '/admin/config/system/external_content/{external_content}'
+  defaults:
+    _entity_form: 'external_content.edit'
+    _title: 'Edit external_content'
+  requirements:
+    _permission: 'administer site configuration'
+
+entity.external_content.delete_form:
+  path: '/admin/config/system/external_content/{external_content}/delete'
+  defaults:
+    _entity_form: 'external_content.delete'
+    _title: 'Delete external_content'
+  requirements:
+    _permission: 'administer site configuration'

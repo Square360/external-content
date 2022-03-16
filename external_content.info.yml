@@ -1,0 +1,5 @@
+name: "SOM API: External Content"
+description: "Provides custom settings for external Yale SOM content"
+type: module
+package: "SOM"
+core_version_requirement: ^8 || ^9
