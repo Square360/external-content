@@ -14,8 +14,8 @@ use Drupal\Core\TypedData\DataDefinition;
  *
  * @FieldType(
  *   id = "external_content_item",
- *   label = @Translation("ExternalContentItem"),
- *   category = @Translation("General"),
+ *   label = @Translation("External Content"),
+ *   category = @Translation("Reference"),
  *   default_widget = "external_content_default",
  *   default_formatter = "external_content_preview"
  * )
@@ -69,14 +69,14 @@ class ExternalContentItem extends FieldItemBase {
     $properties['id'] = DataDefinition::create('string')
       ->setLabel(t('id'))
       ->setRequired(TRUE);
-    $properties['UUID'] = DataDefinition::create('string')
+    $properties['uuid'] = DataDefinition::create('string')
       ->setLabel(t('UUID'))
       ->setRequired(TRUE);
     $properties['source'] = DataDefinition::create('string')
       ->setLabel(t('Source'))
       ->setRequired(TRUE);
-    $properties['summary'] = DataDefinition::create('string')
-      ->setLabel(t('Summary of target'))
+    $properties['title'] = DataDefinition::create('string')
+      ->setLabel(t('Title of target at time of creation.'))
       ->setRequired(FALSE);
 
     return $properties;

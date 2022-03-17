@@ -33,7 +33,7 @@ class ExternalContentWidget extends WidgetBase {
 
     $element['foo'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Foo'),
+      '#title' => $this->t('Some setting (Foo)'),
       '#default_value' => $this->getSetting('foo'),
     ];
 
@@ -53,9 +53,41 @@ class ExternalContentWidget extends WidgetBase {
    */
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
 
-    $element['value'] = $element + [
+    $default_value = NULL;
+
+    /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
+    $entityTypeManager =\Drupal::service('entity_type.manager');
+    /** @var \Drupal\Core\Entity\EntityStorageInterface $storage */
+    $storage = $entityTypeManager->getStorage('external_content');
+    $sources = $storage->loadMultiple();
+
+    $options = [];
+    /** @var \Drupal\external_content\Entity\ExternalContent $source */
+    foreach ($sources as $source) {
+      $options[$source->getId()] = $source->getLabel();
+    }
+
+    // Build a "label (nid)' value that can be parse for storage.
+    if (!empty($items[$delta]->iid)) {
+      $default_value = sprintf('%s (%d)', $items[$delta]->title_search, $items[$delta]->nid);
+    }
+
+    // Create container copying parent element items
+    $element['container'] = $element + [
+        '#type' => 'fieldset',
+    ];
+
+    $element['container']['source'] = [
+      '#type' => 'select',
+      '#title' => $this->t("Source"),
+      '#options' => $options,
+      '#default_value' => isset($items[$delta]->source) ? $items[$delta]->source : NULL,
+    ];
+
+    $element['container']['title'] = [
       '#type' => 'textfield',
-      '#default_value' => isset($items[$delta]->value) ? $items[$delta]->value : NULL,
+      '#title' => $this->t("Search"),
+      '#default_value' => isset($items[$delta]->title) ? $items[$delta]->title : NULL,
     ];
 
     return $element;

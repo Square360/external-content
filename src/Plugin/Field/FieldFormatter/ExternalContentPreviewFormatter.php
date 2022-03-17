@@ -13,7 +13,7 @@ use Drupal\Core\Form\FormStateInterface;
  *   id = "external_content_preview",
  *   label = @Translation("ExternalContentPreview"),
  *   field_types = {
- *     "string"
+ *     "external_content_item"
  *   }
  * )
  */
