@@ -30,3 +30,10 @@ entity.external_content.delete_form:
     _title: 'Delete external_content'
   requirements:
     _permission: 'administer site configuration'
+external_content.autocomplete:
+  path: '/external-content/autocomplete'
+  defaults:
+    _title: 'External Content Autocomplete'
+    _controller: '\Drupal\external_content\Controller\ExternalContentAutocompleteController::build'
+  requirements:
+    _permission: 'access content'
