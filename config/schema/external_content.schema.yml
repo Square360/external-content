@@ -1,4 +1,4 @@
-som_api_integration.external_content.*:
+external_content.external_content.*:
   type: config_entity
   label: 'External Content'
   mapping:
@@ -17,6 +17,7 @@ som_api_integration.external_content.*:
     includes:
       type: string
       label: 'Includes'
+
 field.field_settings.external_content_item:
   type: mapping
   label: ExternalContentItem field settings
