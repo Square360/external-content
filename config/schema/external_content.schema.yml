@@ -32,3 +32,19 @@ field.value.external_content_item:
     value:
       type: label
       label: Value
+
+field.widget.settings.external_content_default:
+  type: mapping
+  label: ExternalContentDefault widget settings
+  mapping:
+    foo:
+      type: string
+      label: Foo
+
+field.formatter.settings.external_content_preview:
+  type: mapping
+  label: ExternalContentPreview formatter settings
+  mapping:
+    foo:
+      type: string
+      label: Foo
