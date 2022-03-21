@@ -54,7 +54,7 @@ class ExternalContentItem extends FieldItemBase {
    * {@inheritdoc}
    */
   public function isEmpty() {
-    $value = $this->get('uuid')->getValue();
+    $value = $this->get('target_id')->getValue();
     return $value === NULL || $value === '';
   }
 
@@ -66,18 +66,18 @@ class ExternalContentItem extends FieldItemBase {
     // @DCG
     // See /core/lib/Drupal/Core/TypedData/Plugin/DataType directory for
     // available data types.
-    $properties['id'] = DataDefinition::create('string')
-      ->setLabel(t('id'))
+    $properties['target_id'] = DataDefinition::create('string')
+      ->setLabel(t('Target ID'))
       ->setRequired(TRUE);
     $properties['uuid'] = DataDefinition::create('string')
       ->setLabel(t('UUID'))
-      ->setRequired(TRUE);
+      ->setRequired(FALSE);
     $properties['source'] = DataDefinition::create('string')
       ->setLabel(t('Source'))
       ->setRequired(TRUE);
     $properties['title'] = DataDefinition::create('string')
       ->setLabel(t('Title of target at time of creation.'))
-      ->setRequired(FALSE);
+      ->setRequired(TRUE);
 
     return $properties;
   }
@@ -90,12 +90,10 @@ class ExternalContentItem extends FieldItemBase {
 
     $constraint_manager = \Drupal::typedDataManager()->getValidationConstraintManager();
 
-    // @DCG Suppose our value must not be longer than 10 characters.
-    $options['value']['Length']['max'] = 10;
+    $options['target_id']['Length']['max'] = 32;
+    $options['uuid']['Length']['max'] = 32;
+    $options['title']['Length']['max'] = 255;
 
-    // @DCG
-    // See /core/lib/Drupal/Core/Validation/Plugin/Validation/Constraint
-    // directory for available constraints.
     $constraints[] = $constraint_manager->create('ComplexData', $options);
     return $constraints;
   }
@@ -106,7 +104,7 @@ class ExternalContentItem extends FieldItemBase {
   public static function schema(FieldStorageDefinitionInterface $field_definition) {
 
     $columns = [
-      'id' => [
+      'target_id' => [
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,
@@ -124,11 +122,11 @@ class ExternalContentItem extends FieldItemBase {
         'not null' => FALSE,
         'description' => 'Source of selection.',
       ],
-      'summary' => [
+      'title' => [
         'type' => 'varchar',
         'length' => 255,
         'not null' => FALSE,
-        'description' => 'Column description.',
+        'description' => 'Label of target item.',
       ],
     ];
 

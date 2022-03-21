@@ -1,0 +1,4 @@
+update-source:
+  version: VERSION
+  js:
+    js/update-source.js: {}

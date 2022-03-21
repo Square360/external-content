@@ -5,7 +5,11 @@ namespace Drupal\external_content\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityAutocompleteMatcher;
 use Drupal\Core\KeyValueStore\KeyValueFactoryInterface;
+use Drupal\external_content\ExternalContentJsonApi;
+use Drupal\som_api_integration_externalreference\ExternalSourceJsonApi;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Returns responses for External Content routes.
@@ -52,14 +56,44 @@ class ExternalContentAutocompleteController extends ControllerBase {
   /**
    * Builds the response.
    */
-  public function build() {
+  public function handleNodeAutoComplete(Request $request) {
 
-    $build['content'] = [
-      '#type' => 'item',
-      '#markup' => $this->t('It works!'),
-    ];
+    $results = [];
 
-    return $build;
+    $source_id = $request->query->get('source_id');
+    $input = $request->query->get('q');
+
+    /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
+    $entityTypeManager =\Drupal::service('entity_type.manager');
+    /** @var \Drupal\Core\Entity\EntityStorageInterface $storage */
+    $storage = $entityTypeManager->getStorage('external_content');
+    /** @var \Drupal\external_content\Entity\ExternalContent $source */
+    $source = $storage->load($source_id);
+
+
+    // Get the typed string from the URL, if it exists.
+    if ($input) {
+
+      $external_source = new ExternalContentJsonApi();
+      $endpoint = $source->getResource();
+      $query = $source->getTitleQuery($input);
+      $json = $external_source->getJsonApi($endpoint, $query, TRUE)['data'];
+
+      if ($json !== FALSE) {
+        $internal_id = 'drupal_internal__nid';
+        $label_id = 'title';
+        foreach ($json as $result) {
+          $id = $result['attributes'][$internal_id];
+          $title = $result['attributes'][$label_id];
+          $results[] = [
+            'value' => "$title ($id)",
+            'label' => "$title ($id)",
+          ];
+        }
+      }
+    }
+
+    return new JsonResponse($results);
   }
 
 }

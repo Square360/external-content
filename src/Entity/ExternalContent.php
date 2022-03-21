@@ -2,6 +2,7 @@
 
 namespace Drupal\external_content\Entity;
 
+use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\external_content\ExternalContentInterface;
 
@@ -95,7 +96,24 @@ class ExternalContent extends ConfigEntityBase implements ExternalContentInterfa
 
   public function getResource() {
     return $this->resource;
-}
+  }
+
+  public function getQuery() {
+  }
+
+  public function getTitleQuery($input) {
+
+    $query_resource = $this->getResource();
+
+    $query = [
+      'filter[title][operator]' => 'CONTAINS',
+      'filter[title][value]' => $input,
+      'page[limit]' => 5,
+    ];
+
+    return $query;
+
+  }
   // Your specific configuration property get/set methods go here,
   // implementing the interface.
 }
