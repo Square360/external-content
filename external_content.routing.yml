@@ -1,6 +1,6 @@
 
 entity.external_content.collection:
-  path: '/admin/config/system/external_content'
+  path: '/admin/config/services/external_content'
   defaults:
     _entity_list: 'external_content'
     _title: 'External Content Configuration'
@@ -8,7 +8,7 @@ entity.external_content.collection:
     _permission: 'administer site configuration'
 
 entity.external_content.add_form:
-  path: '/admin/config/system/external_content/add'
+  path: '/admin/config/services/external_content/add'
   defaults:
     _entity_form: 'external_content.add'
     _title: 'Add external_content'
@@ -16,7 +16,7 @@ entity.external_content.add_form:
     _permission: 'administer site configuration'
 
 entity.external_content.edit_form:
-  path: '/admin/config/system/external_content/{external_content}'
+  path: '/admin/config/services/external_content/{external_content}'
   defaults:
     _entity_form: 'external_content.edit'
     _title: 'Edit external_content'
@@ -24,16 +24,20 @@ entity.external_content.edit_form:
     _permission: 'administer site configuration'
 
 entity.external_content.delete_form:
-  path: '/admin/config/system/external_content/{external_content}/delete'
+  path: '/admin/config/services/external_content/{external_content}/delete'
   defaults:
     _entity_form: 'external_content.delete'
     _title: 'Delete external_content'
   requirements:
     _permission: 'administer site configuration'
+
 external_content.autocomplete:
   path: '/external-content/autocomplete'
   defaults:
     _title: 'External Content Autocomplete'
-    _controller: '\Drupal\external_content\Controller\ExternalContentAutocompleteController::build'
+    _controller: '\Drupal\external_content\Controller\ExternalContentAutocompleteController::handleNodeAutocomplete'
+    _format: json
   requirements:
     _permission: 'access content'
+  options:
+    no_cache: 'TRUE'
