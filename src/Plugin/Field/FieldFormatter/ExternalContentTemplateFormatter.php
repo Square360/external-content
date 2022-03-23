@@ -8,17 +8,17 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\external_content\ExternalContentJsonApi;
 
 /**
- * Plugin implementation of the 'ExternalContentPreview' formatter.
+ * Plugin implementation of the 'ExternalContentTemplate' formatter.
  *
  * @FieldFormatter(
- *   id = "external_content_preview",
- *   label = @Translation("ExternalContentPreview"),
+ *   id = "external_content_template",
+ *   label = @Translation("ExternalContentTemplate"),
  *   field_types = {
  *     "external_content_item"
  *   }
  * )
  */
-class ExternalContentPreviewFormatter extends FormatterBase {
+class ExternalContentTemplateFormatter extends FormatterBase {
 
   /**
    * {@inheritdoc}
@@ -60,7 +60,6 @@ class ExternalContentPreviewFormatter extends FormatterBase {
 
     foreach ($items as $delta => $item) {
       $source_id = $item->source;
-      $title = $item->title;
       $id = $item->target_id;
 
       /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
@@ -70,24 +69,27 @@ class ExternalContentPreviewFormatter extends FormatterBase {
       /** @var \Drupal\external_content\Entity\ExternalContent $source */
       $source = $storage->load($source_id);
 
-      $label = $source->getLabel();
-
-
       $data = $source->getContentByTerm($id, $this->getSetting('limit'));
 
-      $links = array_map(function($item) {
-        return ExternalContentJsonApi::getLinkFromEntity($item);
-      }, $data['data']);
+      $render_children = [];
+      foreach($data['data'] as $entity) {
+        $render_children[] = [
+          '#theme' => 'external_content',
+          '#data' => $entity,
+          '#source_id' => $source_id,
+          '#source' => $source
+        ];
+      }
 
-      $element[$delta] = [
-        [
-          '#markup' =>  "$title ($id) from $label",
-        ],
-        [
-          '#theme' => 'item_list',
-          '#items' => $links
-        ]
-      ];
+      if (count($render_children) > 1) {
+        $element[$delta] = [
+            '#theme' => 'item_list',
+            '#items' => $render_children
+        ];
+      }
+      else {
+        $element[$delta] = $render_children;
+      }
     }
 
     return $element;

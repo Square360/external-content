@@ -6,6 +6,7 @@ use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
+use Drupal\external_content\Entity\ExternalContent;
 
 /**
  * Contains all code specifically related to requesting & processing JSONAPI.
@@ -27,8 +28,8 @@ class ExternalContentJsonApi {
    */
   public static function extractFileImage($json, $jsonapi_request, $field_name) {
     $image = $json["relationships"][$field_name]["data"];
-    $image_file = ExternalSourceJsonApi::getIncludedDataById($jsonapi_request, $image['id']);
-    $site = ExternalSourceJsonApi::getSiteFromUrl($json["links"]["self"]["href"]);
+    $image_file = self::getIncludedDataById($jsonapi_request, $image['id']);
+    $site = self::getSiteFromUrl($json["links"]["self"]["href"]);
 
     $external_image = [
       'url' => $site . $image_file["attributes"]["uri"]["url"],
@@ -57,11 +58,11 @@ class ExternalContentJsonApi {
   public static function extractMediaImage($json, $jsonapi_request, $field_name) {
 
     $field_image_id = $json["relationships"][$field_name]["data"]["id"];
-    $image = ExternalSourceJsonApi::getIncludedDataById($jsonapi_request, $field_image_id);
+    $image = self::getIncludedDataById($jsonapi_request, $field_image_id);
     $image_file_id = $image["relationships"]["field_media_image"]["data"]["id"];
-    $image_file = ExternalSourceJsonApi::getIncludedDataById($jsonapi_request, $image_file_id);
+    $image_file = self::getIncludedDataById($jsonapi_request, $image_file_id);
 
-    $site = ExternalSourceJsonApi::getSiteFromUrl($json["links"]["self"]["href"]);
+    $site = self::getSiteFromUrl($json["links"]["self"]["href"]);
     $external_image = [
       'url' => $site . $image_file["attributes"]["uri"]["url"],
       'consumers' => $image_file["links"],
@@ -76,39 +77,7 @@ class ExternalContentJsonApi {
     return $external_image;
   }
 
-  /**
-   * Return the available external sources.
-   *
-   * @return array
-   *   Sources array
-   */
-  public static function getReferenceSources() {
-    $env = (
-    defined('PANTHEON_ENVIRONMENT')
-    && PANTHEON_ENVIRONMENT == 'live'
-    ) ? 'live' : 'dev';
 
-    $sources['insights_article'] = [
-      'entity_label' => 'Insights Article',
-      'source_label' => 'Yale Insights',
-      'resource' => \Drupal::state()->get('yaleinsights_article_path_' . $env),
-      'include' => 'field_body_m,field_image,field_image.field_media_image,field_experts_m,node_type',
-      'terms' => [
-        'topics' => [
-          'label' => 'Insights Article by Topic',
-          'resource' => \Drupal::state()->get('yaleinsights_topic_path_' . $env),
-          'field' => 'field_topics_m',
-        ],
-        'departments' => [
-          'label' => 'Insights Articles by Department',
-          'resource' => \Drupal::state()->get('yaleinsights_department_path_' . $env),
-          'field' => 'field_department',
-        ],
-      ],
-    ];
-
-    return $sources;
-  }
 
   /**
    * Simple function to extract site from an url.
@@ -190,16 +159,30 @@ class ExternalContentJsonApi {
    * @param mixed $jsonapi
    *   JSON object.
    *
-   * @return link
+   * @return \Drupal\Core\GeneratedLink
    *   A link
    */
   public static function getLinkFromEntity($jsonapi) {
-    $endpoint = $jsonapi["links"]["self"]["href"];
-    $alias = $jsonapi["attributes"]["path"]["alias"];
-    $url = ExternalSourceJsonApi::getSiteFromUrl($endpoint) . $alias;
+    $url = self::getUrlFromEntity($jsonapi);
     $title = $jsonapi["attributes"]["title"];
     $link = Link::fromTextAndUrl($title, Url::fromUri($url))->toString();
     return $link;
+  }
+
+  /**
+   * Extracts aliased url from jsonapi entity.
+   *
+   * @param mixed $jsonapi
+   *   JSON object.
+   *
+   * @return string
+   *   A string containing url
+   */
+  public static function getUrlFromEntity($jsonapi) {
+    $endpoint = $jsonapi["links"]["self"]["href"];
+    $alias = $jsonapi["attributes"]["path"]["alias"];
+    $url = self::getSiteFromUrl($endpoint) . $alias;
+    return Url::fromUri($url)->toString();
   }
 
   /**
@@ -214,7 +197,7 @@ class ExternalContentJsonApi {
    *   Node JSONAPI entity (cached)
    */
   public static function getNodeByNid($source_key, $nid) {
-    $sources = ExternalSourceJsonApi::getReferenceSources();
+    $sources = self::getReferenceSources();
     $source = $sources[$source_key];
     $endpoint = $source['resource'];
     $includes = $source['include'];
@@ -222,7 +205,7 @@ class ExternalContentJsonApi {
       "filter[drupal_internal__nid]" => $nid,
       'include' => $includes,
     ];
-    $json = ExternalSourceJsonApi::getJsonApi($endpoint, $query, FALSE);
+    $json = self::getJsonApi($endpoint, $query, FALSE);
     return $json;
   }
 
@@ -243,7 +226,7 @@ class ExternalContentJsonApi {
    */
   public static function getRecentNodes($source_key, $limit = 10) {
 
-    $sources = ExternalSourceJsonApi::getReferenceSources();
+    $sources = self::getReferenceSources();
     $source = $sources[$source_key];
     $endpoint = $source['resource'];
     $query = [
@@ -251,7 +234,7 @@ class ExternalContentJsonApi {
       'sort' => '-created',
       'include' => $source['include'],
     ];
-    $json = ExternalSourceJsonApi::getJsonApi($endpoint, $query);
+    $json = self::getJsonApi($endpoint, $query);
     return $json;
   }
 
@@ -280,7 +263,7 @@ class ExternalContentJsonApi {
    *   Returns array or FALSE.
    */
   public static function getSourceDataFromEndpoint($endpoint) {
-    $sources = ExternalSourceJsonApi::getReferenceSources();
+    $sources = self::getReferenceSources();
     foreach ($sources as $name => $source) {
       if (strpos($endpoint, $source['resource']) === 0) {
         return array_merge($sources[$name], ['id' => $name]);

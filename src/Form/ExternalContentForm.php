@@ -71,14 +71,24 @@ class ExternalContentForm extends EntityForm {
       '#required' => TRUE,
     ];
 
-    $form['term_field'] = [
+    $form['term_resource'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Term (Optional)'),
+      '#title' => $this->t('Term Resource (Optional)'),
       '#maxlength' => 255,
-      '#default_value' => $external_content->getTermField(),
-      '#description' => $this->t("Add a field name to select items from this endpoint by taxonomy term."),
+      '#default_value' => $external_content->getTermResource(),
+      '#description' => $this->t("Resource from which to select filterable terms."),
       '#required' => FALSE,
     ];
+
+    $form['term_field'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Term Field (Optional)'),
+      '#maxlength' => 255,
+      '#default_value' => $external_content->getTermField(),
+      '#description' => $this->t("Add a field name to determine which entity field on which to filter by term."),
+      '#required' => FALSE,
+    ];
+
     $form['includes'] = [
       '#type' => 'textfield',
       '#title' => $this->t('JSONAPI Includes'),

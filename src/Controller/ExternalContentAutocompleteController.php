@@ -76,18 +76,26 @@ class ExternalContentAutocompleteController extends ControllerBase {
 
       $external_source = new ExternalContentJsonApi();
       $endpoint = $source->getResource();
-      $query = $source->getTitleQuery($input);
+
+      $endpoint = $source->getLookupResource();
+      $query = $source->getLookupQuery($input);
       $json = $external_source->getJsonApi($endpoint, $query, TRUE)['data'];
 
       if ($json !== FALSE) {
-        $internal_id = 'drupal_internal__nid';
+
+        $nid = 'drupal_internal__nid';
         $label_id = 'title';
         foreach ($json as $result) {
-          $id = $result['attributes'][$internal_id];
-          $title = $result['attributes'][$label_id];
+          $uuid = $result['id'];
+          $drupal_id = !empty($result['attributes']['drupal_internal__nid'])
+            ? $result['attributes']['drupal_internal__nid']
+            : $result['attributes']['drupal_internal__tid'];
+          $title = !empty($result['attributes']['title'])
+            ? $result['attributes']['title']
+            : $result['attributes']['name'];
           $results[] = [
-            'value' => "$title ($id)",
-            'label' => "$title ($id)",
+            'value' => "$title ($drupal_id)",
+            'label' => "$title ($drupal_id)",
           ];
         }
       }

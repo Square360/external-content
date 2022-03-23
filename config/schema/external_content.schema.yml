@@ -11,6 +11,9 @@ external_content.external_content.*:
     resource:
       type: string
       label: 'Resource'
+    term_resource:
+      type: string
+      label: 'Term Resource'
     term_field:
       type: string
       label: 'Term Field'

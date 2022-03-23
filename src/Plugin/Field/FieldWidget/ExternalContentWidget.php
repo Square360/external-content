@@ -8,6 +8,7 @@ use Drupal\Core\Entity\Element\EntityAutocomplete;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 use Drupal\som_api_integration_externalreference\ExternalSourceJsonApi;
 
 /**
@@ -21,6 +22,7 @@ use Drupal\som_api_integration_externalreference\ExternalSourceJsonApi;
  */
 class ExternalContentWidget extends WidgetBase {
 
+  const acLimit = 5;
   /**
    * {@inheritdoc}
    */
@@ -85,7 +87,8 @@ class ExternalContentWidget extends WidgetBase {
       $default_value = sprintf('%s (%d)', $items[$delta]->title, $items[$delta]->target_id);
     }
 
-    $element['#attached']['library'][] = 'external_content/update-source';
+    // Disabled as we are using AJAX now.
+//    $element['#attached']['library'][] = 'external_content/update-source';
 
     $element['source'] = [
       '#type' => 'select',
@@ -110,19 +113,18 @@ class ExternalContentWidget extends WidgetBase {
     $element['search'] = [
       '#title' => $this->t('Search'),
       '#type' => 'textfield',
-      '#prefix' => '<div id="'.$ajax_wrapper_id.'">',
+      '#prefix' => '<div id="' . $ajax_wrapper_id . '">',
       '#suffix' => '</div>',
       '#autocomplete_route_name' => 'external_content.autocomplete',
       '#autocomplete_route_parameters' => [
         'source_id' => 'insights_article',
-        'count' => 5,
       ],
       '#placeholder' => 'Type to search',
       '#default_value' => $default_value,
       '#cache' => ['max-age' => 0],
       '#attributes' => [
-      'class' => ['external-content__search']
-    ]
+        'class' => ['external-content__search'],
+      ],
     ];
 
     return $element;
@@ -131,20 +133,18 @@ class ExternalContentWidget extends WidgetBase {
   public function updateAutoCompleteSource(array &$form, FormStateInterface $form_state) {
 
     $triggering_element = $form_state->getTriggeringElement();
-
     $source_id = $form_state->getValue($triggering_element['#parents']);
-
     $container = NestedArray::getValue($form, array_slice($triggering_element['#array_parents'], 0, -1));
 
     $search = $container["search"];
-    $search["#title"] = 'Really changed' . time();
-    $search['#attributes']['class'][] = time();
-    $search['#autocomplete_route_name'] = 'som_api_integration_externalreference.insights_node.autocomplete';
-    $search["#autocomplete_route_parameters"] = ["source_id" => $source_id ];
-    $search['#cache']['max-age'] = 0;
-    $form_state->setRebuild(TRUE);
-    \Drupal::service('page_cache_kill_switch')->trigger();
-//    field_update_instance($container['search']);
+
+    $route_params = [
+      "source_id" => $source_id,
+    ];
+
+    $autocomplete_path = Url::fromRoute('external_content.autocomplete', $route_params);
+    $search["#attributes"]["data-autocomplete-path"] = $autocomplete_path->toString();
+    $search["#description"] = $autocomplete_path->toString();
     return $search;
   }
 
@@ -179,13 +179,13 @@ class ExternalContentWidget extends WidgetBase {
     $field_name = $element['#parents'][0];
     $value = $form_state->cleanValues()->getValue($field_name);
 
-    $id = EntityAutocomplete::extractEntityIdFromAutocompleteInput($value);
+    $id = EntityAutocomplete::extractEntityIdFromAutocompleteInput($value[0]["search"]);
     if (empty($id)) {
       $form_state->setValueForElement($element, '');
       return;
     }
 
-//    $response = ExternalSourceJsonApi::getNodeByNid('insights_article', $id);
+//    $response =   public function getTermQuery($term_id, $limit=1) {getNodeByNid('insights_article', $id);
 //
 //    if ($response === FALSE) {
 //      $form_state->setError($element, t('This article does not exist.'));
