@@ -161,6 +161,16 @@ class ExternalContent extends ConfigEntityBase implements ExternalContentInterfa
     return $query;
   }
 
+  public function getContent($id, $limit=1) {
+
+    if ($this->isTermResource()) {
+      return $this->getContentByTerm($id, $limit);
+    }
+    else {
+      return $this->getContentByNid($id);
+    }
+  }
+
   public function getContentByTerm($term_id, $limit = 1) {
     $endpoint = $this->getResource();
     $query = $this->getContentbyTermQuery($term_id, $limit);
@@ -174,6 +184,7 @@ class ExternalContent extends ConfigEntityBase implements ExternalContentInterfa
       'include' => $this->getIncludes(),
     ];
   }
+
   public function getContentByNid($id) {
     $endpoint = $this->getResource();
     $query = $this->getContentByNidQuery($id);

@@ -69,7 +69,7 @@ class ExternalContentTemplateFormatter extends FormatterBase {
       /** @var \Drupal\external_content\Entity\ExternalContent $source */
       $source = $storage->load($source_id);
 
-      $data = $source->getContentByTerm($id, $this->getSetting('limit'));
+      $data = $source->getContent($id, $this->getSetting('limit'));
 
       $render_children = [];
       foreach($data['data'] as $entity) {
