@@ -75,7 +75,8 @@ class ExternalContentTemplateFormatter extends FormatterBase {
       foreach($data['data'] as $entity) {
         $render_children[] = [
           '#theme' => 'external_content',
-          '#data' => $entity,
+          '#doc' => $entity,
+          '#jsonapi' => $data,
           '#source_id' => $source_id,
           '#source' => $source
         ];
