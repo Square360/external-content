@@ -65,7 +65,7 @@ class ExternalContentTemplateFormatter extends FormatterBase {
       /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
       $entityTypeManager =\Drupal::service('entity_type.manager');
       /** @var \Drupal\Core\Entity\EntityStorageInterface $storage */
-      $storage = $entityTypeManager->getStorage('external_content');
+      $storage = $entityTypeManager->getStorage('external_content_source');
       /** @var \Drupal\external_content\Entity\ExternalContent $source */
       $source = $storage->load($source_id);
 

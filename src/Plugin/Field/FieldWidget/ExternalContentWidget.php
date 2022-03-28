@@ -9,7 +9,6 @@ use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
-use Drupal\som_api_integration_externalreference\ExternalSourceJsonApi;
 
 /**
  * Defines the 'external_content_default' field widget.
@@ -59,7 +58,7 @@ class ExternalContentWidget extends WidgetBase {
     /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
     $entityTypeManager =\Drupal::service('entity_type.manager');
     /** @var \Drupal\Core\Entity\EntityStorageInterface $storage */
-    $storage = $entityTypeManager->getStorage('external_content');
+    $storage = $entityTypeManager->getStorage('external_content_source');
     $sources = $storage->loadMultiple();
     /** @var \Drupal\external_content\Entity\ExternalContent $source */
     foreach ($sources as $source) {
@@ -86,9 +85,6 @@ class ExternalContentWidget extends WidgetBase {
     if (!empty($items[$delta]->target_id)) {
       $default_value = sprintf('%s (%d)', $items[$delta]->title, $items[$delta]->target_id);
     }
-
-    // Disabled as we are using AJAX now.
-//    $element['#attached']['library'][] = 'external_content/update-source';
 
     $element['source'] = [
       '#type' => 'select',
@@ -170,14 +166,20 @@ class ExternalContentWidget extends WidgetBase {
     return $values;
   }
 
-
   /**
    * {@inheritdoc}
    */
   public static function validate($element, FormStateInterface $form_state) {
 
     $field_name = $element['#parents'][0];
+    if ($element["#parents"][0] == 'default_value_input') {
+      return;
+    }
+
     $value = $form_state->cleanValues()->getValue($field_name);
+    if (empty($value[0]["search"])) {
+      return;
+    }
 
     $id = EntityAutocomplete::extractEntityIdFromAutocompleteInput($value[0]["search"]);
     if (empty($id)) {
@@ -190,6 +192,7 @@ class ExternalContentWidget extends WidgetBase {
 //    if ($response === FALSE) {
 //      $form_state->setError($element, t('This article does not exist.'));
 //    }
+
   }
 
 }

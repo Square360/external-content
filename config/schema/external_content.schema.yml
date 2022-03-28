@@ -1,6 +1,6 @@
-external_content.external_content.*:
+external_content.external_content_source.*:
   type: config_entity
-  label: 'External Content'
+  label: external_content_source
   mapping:
     id:
       type: string

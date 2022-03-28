@@ -66,7 +66,7 @@ class ExternalContentAutocompleteController extends ControllerBase {
     /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
     $entityTypeManager =\Drupal::service('entity_type.manager');
     /** @var \Drupal\Core\Entity\EntityStorageInterface $storage */
-    $storage = $entityTypeManager->getStorage('external_content');
+    $storage = $entityTypeManager->getStorage('external_content_source');
     /** @var \Drupal\external_content\Entity\ExternalContent $source */
     $source = $storage->load($source_id);
 
@@ -74,12 +74,12 @@ class ExternalContentAutocompleteController extends ControllerBase {
     // Get the typed string from the URL, if it exists.
     if ($input) {
 
-      $external_source = new ExternalContentJsonApi();
+      $jsonapi = new ExternalContentJsonApi();
       $endpoint = $source->getResource();
 
       $endpoint = $source->getLookupResource();
       $query = $source->getLookupQuery($input);
-      $json = $external_source->getJsonApi($endpoint, $query, TRUE)['data'];
+      $json = $jsonapi->getJsonApi($endpoint, $query, TRUE)['data'];
 
       if ($json !== FALSE) {
 

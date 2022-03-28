@@ -1,35 +1,34 @@
-
-entity.external_content.collection:
-  path: '/admin/config/services/external_content'
+entity.external_content_source.collection:
+  path: '/admin/config/services/external_content_sources'
   defaults:
-    _entity_list: 'external_content'
-    _title: 'External Content Configuration'
+    _entity_list: 'external_content_source'
+    _title: 'External Content Sources'
   requirements:
-    _permission: 'administer site configuration'
+    _permission: 'administer external_content_source'
 
-entity.external_content.add_form:
-  path: '/admin/config/services/external_content/add'
+entity.external_content_source.add_form:
+  path: '/admin/config/services/external_content_source/add'
   defaults:
-    _entity_form: 'external_content.add'
-    _title: 'Add external_content'
+    _entity_form: 'external_content_source.add'
+    _title: 'Add an External Content Source'
   requirements:
-    _permission: 'administer site configuration'
+    _permission: 'administer external_content_source'
 
-entity.external_content.edit_form:
-  path: '/admin/config/services/external_content/{external_content}'
+entity.external_content_source.edit_form:
+  path: '/admin/config/services/external-content-source/{external_content_source}'
   defaults:
-    _entity_form: 'external_content.edit'
-    _title: 'Edit external_content'
+    _entity_form: 'external_content_source.edit'
+    _title: 'Edit an External Content Source'
   requirements:
-    _permission: 'administer site configuration'
+    _permission: 'administer external_content_source'
 
-entity.external_content.delete_form:
-  path: '/admin/config/services/external_content/{external_content}/delete'
+entity.external_content_source.delete_form:
+  path: '/admin/config/services/external-content-source/{external_content_source}/delete'
   defaults:
-    _entity_form: 'external_content.delete'
-    _title: 'Delete external_content'
+    _entity_form: 'external_content_source.delete'
+    _title: 'Delete an External Content Source'
   requirements:
-    _permission: 'administer site configuration'
+    _permission: 'administer external_content_source'
 
 external_content.autocomplete:
   path: '/external-content/autocomplete'

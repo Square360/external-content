@@ -1,5 +1,5 @@
-entity.external_content.collection:
+entity.external_content_source.overview:
   title: 'External Content Sources'
   parent: system.admin_config_services
-  description: 'Configure External Content Sources'
-  route_name: entity.external_content.collection
+  description: 'Configure External Content sources.'
+  route_name: entity.external_content_source.collection
