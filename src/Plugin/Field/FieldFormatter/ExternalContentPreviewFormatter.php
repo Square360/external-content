@@ -73,7 +73,7 @@ class ExternalContentPreviewFormatter extends FormatterBase {
       $label = $source->getLabel();
 
 
-      $data = $source->getContentByTerm($id, $this->getSetting('limit'));
+      $data = $source->getContent($id, $this->getSetting('limit'));
 
       $links = array_map(function($item) {
         return ExternalContentJsonApi::getLinkFromEntity($item);
