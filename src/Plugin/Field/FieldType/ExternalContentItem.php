@@ -32,7 +32,9 @@ class ExternalContentItem extends FieldItemBase {
    * {@inheritdoc}
    */
   public static function defaultFieldSettings() {
-    $settings = ['bar' => 'beer'];
+    $settings = [
+      'enabled_sources' => []
+    ];
     return $settings + parent::defaultFieldSettings();
   }
 
@@ -41,11 +43,16 @@ class ExternalContentItem extends FieldItemBase {
    */
   public function fieldSettingsForm(array $form, FormStateInterface $form_state) {
 
-    $element['bar'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Bar'),
-      '#default_value' => $this->getSetting('bar'),
+    $enabled_sources = $this->getSetting('enabled_sources');
+
+    $element['enabled_sources'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t("Enabled Sources"),
+      '#options' => $this->getSourceOptions(),
+      '#default_value' => empty($enabled_sources) ? [] : $enabled_sources,
+      '#description' => $this->t('If no sources are selected, all sources will be available for selection.')
     ];
+
 
     return $element;
   }
@@ -147,4 +154,16 @@ class ExternalContentItem extends FieldItemBase {
     return $values;
   }
 
+  protected function getSourceOptions() {
+    $options = [];
+    /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
+    $entityTypeManager =\Drupal::service('entity_type.manager');
+    $storage = $entityTypeManager->getStorage('external_content_source');
+    $sources = $storage->loadMultiple();
+    /** @var \Drupal\external_content\Entity\ExternalContent $source */
+    foreach ($sources as $source) {
+      $options[$source->getId()] = $source->getLabel();
+    }
+    return $options;
+  }
 }

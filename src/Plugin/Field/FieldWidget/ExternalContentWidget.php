@@ -22,48 +22,25 @@ use Drupal\Core\Url;
 class ExternalContentWidget extends WidgetBase {
 
   const acLimit = 5;
-  /**
-   * {@inheritdoc}
-   */
-  public static function defaultSettings() {
-    return [
-      'foo' => 'bar',
-    ] + parent::defaultSettings();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function settingsForm(array $form, FormStateInterface $form_state) {
-
-    $element['foo'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Some setting (Foo)'),
-      '#default_value' => $this->getSetting('foo'),
-    ];
-
-    return $element;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function settingsSummary() {
-    $summary[] = $this->t('Foo: @foo', ['@foo' => $this->getSetting('foo')]);
-    return $summary;
-  }
 
   protected function getSourceOptions() {
     $options = [];
     /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
     $entityTypeManager =\Drupal::service('entity_type.manager');
-    /** @var \Drupal\Core\Entity\EntityStorageInterface $storage */
     $storage = $entityTypeManager->getStorage('external_content_source');
     $sources = $storage->loadMultiple();
-    /** @var \Drupal\external_content\Entity\ExternalContent $source */
+
+    $enabled_sources = array_filter($this->fieldDefinition->getSetting('enabled_sources'));
+
+    /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
     foreach ($sources as $source) {
       $options[$source->getId()] = $source->getLabel();
     }
+
+    if (sizeof($enabled_sources)) {
+      return array_intersect_key($enabled_sources, $options);
+    }
+
     return $options;
   }
 
@@ -101,9 +78,6 @@ class ExternalContentWidget extends WidgetBase {
           'message' => $this->t('Updating autocomplete...'),
         ],
       ],
-      '#attributes' => [
-        'class' => ['external-content__source-selector']
-      ]
     ];
 
     $element['search'] = [
@@ -118,9 +92,6 @@ class ExternalContentWidget extends WidgetBase {
       '#placeholder' => 'Type to search',
       '#default_value' => $default_value,
       '#cache' => ['max-age' => 0],
-      '#attributes' => [
-        'class' => ['external-content__search'],
-      ],
     ];
 
     return $element;
