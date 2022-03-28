@@ -25,9 +25,9 @@ field.field_settings.external_content_item:
   type: mapping
   label: ExternalContentItem field settings
   mapping:
-    bar:
-      type: string
-      label: Bar
+    enabled_souces:
+      type: array
+      label: Enabled Sources
 
 field.value.external_content_item:
   type: mapping
@@ -37,18 +37,26 @@ field.value.external_content_item:
       type: label
       label: Value
 
-field.widget.settings.external_content_default:
-  type: mapping
-  label: ExternalContentDefault widget settings
-  mapping:
-    foo:
-      type: string
-      label: Foo
-
 field.formatter.settings.external_content_preview:
   type: mapping
   label: ExternalContentPreview formatter settings
   mapping:
-    foo:
-      type: string
-      label: Foo
+    limit:
+      type: integer
+      label: Limit
+
+field.formatter.settings.external_content_template:
+  type: mapping
+  label: ExternalContentPreview formatter settings
+  mapping:
+    limit:
+      type: integer
+      label: Limit
+
+field.formatter.settings.external_content_json:
+  type: mapping
+  label: ExternalContentPreview formatter settings
+  mapping:
+    limit:
+      type: integer
+      label: Limit
