@@ -2,8 +2,11 @@
 
 namespace Drupal\external_content\Plugin\Field\FieldWidget;
 
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Entity\Element\EntityAutocomplete;
+use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -21,6 +24,48 @@ use Drupal\Core\Url;
 class ExternalContentWidget extends WidgetBase {
 
   /**
+   * Entity Type Manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
+   * Constructs a WidgetBase object.
+   *
+   * @param string $plugin_id
+   *   The plugin_id for the widget.
+   * @param mixed $plugin_definition
+   *   The plugin implementation definition.
+   * @param \Drupal\Core\Field\FieldDefinitionInterface $field_definition
+   *   The definition of the field to which the widget is associated.
+   * @param array $settings
+   *   The widget settings.
+   * @param array $third_party_settings
+   *   Any third party settings.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   Entity Manager.
+   */
+  public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, array $third_party_settings, EntityTypeManagerInterface $entity_type_manager) {
+    parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $third_party_settings, $entity_type_manager);
+    $this->entityTypeManager = $entity_type_manager;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    return new static(
+      $plugin_id,
+      $plugin_definition,
+      $configuration['field_definition'],
+      $configuration['settings'],
+      $configuration['third_party_settings'],
+      $container->get('entity_type.manager')
+    );
+  }
+
+  /**
    * Returns list of available sources for this field as option list.
    *
    * @return array
@@ -31,11 +76,8 @@ class ExternalContentWidget extends WidgetBase {
    */
   protected function getSourceOptions() {
     $options = [];
-    /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
-    $entityTypeManager = \Drupal::service('entity_type.manager');
-    $storage = $entityTypeManager->getStorage('external_content_source');
+    $storage = $this->entityTypeManager->getStorage('external_content_source');
     $sources = $storage->loadMultiple();
-
     $enabled_sources = array_filter($this->fieldDefinition->getSetting('enabled_sources'));
 
     /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
@@ -80,9 +122,7 @@ class ExternalContentWidget extends WidgetBase {
       '#type' => 'select',
       '#title' => $this->t("Source"),
       '#options' => $this->getSourceOptions(),
-      '#default_value' => isset($items[$delta]->source)
-      ? $items[$delta]->source
-      : NULL,
+      '#default_value' => $items[$delta]->source ?? NULL,
       '#ajax' => [
         'callback' => [$this, 'updateAutoCompleteSource'],
         'disable-refocus' => FALSE,

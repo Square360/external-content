@@ -4,6 +4,7 @@ namespace Drupal\external_content\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityAutocompleteMatcher;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\KeyValueStore\KeyValueFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -30,16 +31,26 @@ class ExternalContentAutocompleteController extends ControllerBase {
   protected $entityAutocompleteMatcher;
 
   /**
+   * Entity Type Manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
    * The controller constructor.
    *
    * @param \Drupal\Core\KeyValueStore\KeyValueFactoryInterface $key_value_factory
    *   The key value factory.
    * @param \Drupal\Core\Entity\EntityAutocompleteMatcher $entity_autocomplete_matcher
    *   The entity.autocomplete_matcher service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   Entity Manager.
    */
-  public function __construct(KeyValueFactoryInterface $key_value_factory, EntityAutocompleteMatcher $entity_autocomplete_matcher) {
+  public function __construct(KeyValueFactoryInterface $key_value_factory, EntityAutocompleteMatcher $entity_autocomplete_matcher, EntityTypeManagerInterface $entity_type_manager) {
     $this->keyValueFactory = $key_value_factory;
     $this->entityAutocompleteMatcher = $entity_autocomplete_matcher;
+    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**
@@ -48,7 +59,8 @@ class ExternalContentAutocompleteController extends ControllerBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('keyvalue'),
-      $container->get('entity.autocomplete_matcher')
+      $container->get('entity.autocomplete_matcher'),
+      $container->get('entity_type.manager')
     );
   }
 
@@ -62,10 +74,7 @@ class ExternalContentAutocompleteController extends ControllerBase {
     $source_id = $request->query->get('source_id');
     $input = $request->query->get('q');
 
-    /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
-    $entityTypeManager = \Drupal::service('entity_type.manager');
-    /** @var \Drupal\Core\Entity\EntityStorageInterface $storage */
-    $storage = $entityTypeManager->getStorage('external_content_source');
+    $storage = $this->entityTypeManager->getStorage('external_content_source');
     /** @var \Drupal\external_content\Entity\ExternalContent $source */
     $source = $storage->load($source_id);
 
@@ -81,10 +90,7 @@ class ExternalContentAutocompleteController extends ControllerBase {
 
       if ($json !== FALSE) {
 
-        $nid = 'drupal_internal__nid';
-        $label_id = 'title';
         foreach ($json as $result) {
-          $uuid = $result['id'];
           $drupal_id = !empty($result['attributes']['drupal_internal__nid'])
             ? $result['attributes']['drupal_internal__nid']
             : $result['attributes']['drupal_internal__tid'];
