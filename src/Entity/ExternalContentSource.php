@@ -3,8 +3,8 @@
 namespace Drupal\external_content\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\external_content\ExternalContentJsonApi;
 use Drupal\external_content\ExternalContentSourceInterface;
-use Drupal\som_api_integration_externalreference\ExternalSourceJsonApi;
 
 /**
  * Defines the external_content_source entity type.
@@ -56,6 +56,8 @@ use Drupal\som_api_integration_externalreference\ExternalSourceJsonApi;
 class ExternalContentSource extends ConfigEntityBase implements ExternalContentSourceInterface {
 
   const LOOKUP_LIMIT = 5;
+
+  const CACHE_TIMEOUT = (60 * 60);
 
   /**
    * The ExternalContentSource ID.
@@ -242,7 +244,6 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    *   JSONAPI data.
    */
   public function getContent($id, $limit = 1) {
-
     if ($this->isTermResource()) {
       return $this->getContentByTerm($id, $limit);
     }
@@ -285,10 +286,16 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    *   JSONAPI response.
    */
   public function getContentByTerm($term_id, $limit = 1) {
-    $endpoint = $this->getResource();
-    $query = $this->getContentbyTermQuery($term_id, $limit);
-    $data = ExternalSourceJsonApi::getJsonApi($endpoint, $query);
-    return $data;
+    if ($cache = $this->getContentCache(__FUNCTION__, func_get_args())) {
+      return $cache->data;
+    }
+    else {
+      $endpoint = $this->getResource();
+      $query = $this->getContentbyTermQuery($term_id, $limit);
+      $data = ExternalContentJsonApi::getJsonApi($endpoint, $query);
+      $this->setContentCache($data, __FUNCTION__, func_get_args());
+      return $data;
+    }
   }
 
   /**
@@ -317,10 +324,68 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    *   JSONAPI response.
    */
   public function getContentByNid($id) {
-    $endpoint = $this->getResource();
-    $query = $this->getContentByNidQuery($id);
-    $data = ExternalSourceJsonApi::getJsonApi($endpoint, $query);
-    return $data;
+
+    if ($cache = $this->getContentCache(__FUNCTION__, func_get_args())) {
+      return $cache->data;
+    }
+    else {
+      $endpoint = $this->getResource();
+      $query = $this->getContentByNidQuery($id);
+      $data = ExternalContentJsonApi::getJsonApi($endpoint, $query);
+      $this->setContentCache($data, __FUNCTION__, func_get_args());
+      return $data;
+    }
+  }
+
+  /**
+   * Returns content cache key for this class based on method & args.
+   *
+   * @param string $function
+   *   Function name.
+   * @param array $args
+   *   List of arguments.
+   *
+   * @return string
+   *   A cache key.
+   */
+  protected function contentCacheKey(string $function, array $args) {
+    $source_id = $this->id;
+    $key_args = implode('_', $args);
+    return "ExternalContentSource:$source_id:$function:$key_args";
+  }
+
+  /**
+   * Retrieve cache for class function with supplied args.
+   *
+   * @param string $function
+   *   Function name.
+   * @param array $args
+   *   Function args.
+   *
+   * @return false|object
+   *   Cache item or null.
+   */
+  protected function getContentCache(string $function, array $args) {
+    $cache_key = $this->contentCacheKey($function, $args);
+    return \Drupal::cache()->get($cache_key);
+  }
+
+  /**
+   * Set cache for class function with supplied args.
+   *
+   * @param object $data
+   *   Data to be cached.
+   * @param string $function
+   *   Function name.
+   * @param array $args
+   *   Function args.
+   *
+   * @return mixed
+   *   Return from cache::set
+   */
+  protected function setContentCache($data, string $function, array $args) {
+    $cache_key = $this->contentCacheKey($function, $args);
+    return \Drupal::cache()->set($cache_key, $data, time() + self::CACHE_TIMEOUT, []);
   }
 
 }
