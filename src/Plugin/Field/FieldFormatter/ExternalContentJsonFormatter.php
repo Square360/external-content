@@ -2,7 +2,6 @@
 
 namespace Drupal\external_content\Plugin\Field\FieldFormatter;
 
-use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FieldItemInterface;
 
@@ -17,7 +16,7 @@ use Drupal\Core\Field\FieldItemInterface;
  *   }
  * )
  */
-class ExternalContentJsonFormatter extends FormatterBase {
+class ExternalContentJsonFormatter extends ExternalContentFormatterBase {
 
   /**
    * {@inheritdoc}
@@ -44,7 +43,7 @@ class ExternalContentJsonFormatter extends FormatterBase {
     /** @var \Drupal\external_content\Entity\ExternalContent $source */
     $source = $storage->load($source_id);
 
-    $data = $source->getContentByTerm($id, $this->getSetting('limit'));
+    $data = $source->getContent($id, $this->getSetting('limit'));
 
     return [
       '#type' => 'html_tag',

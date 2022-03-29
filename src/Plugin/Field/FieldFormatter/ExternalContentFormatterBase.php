@@ -1,20 +1,24 @@
 <?php
 
+namespace Drupal\external_content\Plugin\Field\FieldFormatter;
+
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Form\FormStateInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Base class for External Content Formatters.
  */
-class ExternalContentFormatterBase extends FormatterBase {
+abstract class ExternalContentFormatterBase extends FormatterBase {
 
   /**
    * Entity Type Manager.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected $entityTypeManager;
+  protected EntityTypeManagerInterface $entityTypeManager;
 
   /**
    * Constructs a FormatterBase object.
@@ -37,7 +41,7 @@ class ExternalContentFormatterBase extends FormatterBase {
    *   Entity Manager.
    */
   public function __construct($plugin_id, $plugin_definition, FieldDefinitionInterface $field_definition, array $settings, $label, $view_mode, array $third_party_settings, EntityTypeManagerInterface $entity_type_manager) {
-    parent::__construct([], $plugin_id, $plugin_definition);
+    parent::__construct($plugin_id, $plugin_definition, $field_definition, $settings, $label, $view_mode, $third_party_settings);
     $this->entityTypeManager = $entity_type_manager;
   }
 

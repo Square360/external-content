@@ -3,7 +3,6 @@
 namespace Drupal\external_content\Plugin\Field\FieldFormatter;
 
 use Drupal\Core\Field\FieldItemListInterface;
-use Drupal\Core\Field\FormatterBase;
 use Drupal\external_content\ExternalContentJsonApi;
 
 /**
@@ -17,7 +16,7 @@ use Drupal\external_content\ExternalContentJsonApi;
  *   }
  * )
  */
-class ExternalContentPreviewFormatter extends FormatterBase {
+class ExternalContentPreviewFormatter extends ExternalContentFormatterBase {
 
   /**
    * {@inheritdoc}
