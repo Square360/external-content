@@ -64,34 +64,30 @@ class ExternalContentPreviewFormatter extends FormatterBase {
       $id = $item->target_id;
 
       /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
-      $entityTypeManager =\Drupal::service('entity_type.manager');
+      $entityTypeManager = \Drupal::service('entity_type.manager');
       /** @var \Drupal\Core\Entity\EntityStorageInterface $storage */
       $storage = $entityTypeManager->getStorage('external_content_source');
       /** @var \Drupal\external_content\Entity\ExternalContent $source */
       $source = $storage->load($source_id);
-
       $label = $source->getLabel();
-
-
       $data = $source->getContent($id, $this->getSetting('limit'));
 
-      $links = array_map(function($item) {
+      $links = array_map(function ($item) {
         return ExternalContentJsonApi::getLinkFromEntity($item);
       }, $data['data']);
 
       $element[$delta] = [
         [
-          '#markup' =>  "$title ($id) from $label",
+          '#markup' => "$title ($id) from $label",
         ],
         [
           '#theme' => 'item_list',
-          '#items' => $links
-        ]
+          '#items' => $links,
+        ],
       ];
     }
 
     return $element;
   }
-
 
 }

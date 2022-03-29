@@ -33,7 +33,7 @@ class ExternalContentItem extends FieldItemBase {
    */
   public static function defaultFieldSettings() {
     $settings = [
-      'enabled_sources' => []
+      'enabled_sources' => [],
     ];
     return $settings + parent::defaultFieldSettings();
   }
@@ -50,9 +50,8 @@ class ExternalContentItem extends FieldItemBase {
       '#title' => $this->t("Enabled Sources"),
       '#options' => $this->getSourceOptions(),
       '#default_value' => empty($enabled_sources) ? [] : $enabled_sources,
-      '#description' => $this->t('If no sources are selected, all sources will be available for selection.')
+      '#description' => $this->t('If no sources are selected, all sources will be available for selection.'),
     ];
-
 
     return $element;
   }
@@ -70,9 +69,6 @@ class ExternalContentItem extends FieldItemBase {
    */
   public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
 
-    // @DCG
-    // See /core/lib/Drupal/Core/TypedData/Plugin/DataType directory for
-    // available data types.
     $properties['target_id'] = DataDefinition::create('string')
       ->setLabel(t('Target ID'))
       ->setRequired(TRUE);
@@ -93,8 +89,8 @@ class ExternalContentItem extends FieldItemBase {
    * {@inheritdoc}
    */
   public function getConstraints() {
-    $constraints = parent::getConstraints();
 
+    $constraints = parent::getConstraints();
     $constraint_manager = \Drupal::typedDataManager()->getValidationConstraintManager();
 
     $options['target_id']['Length']['max'] = 32;
@@ -154,10 +150,16 @@ class ExternalContentItem extends FieldItemBase {
     return $values;
   }
 
+  /**
+   * Returns list of available sources as option list.
+   *
+   * @return array
+   *   Options list.
+   */
   protected function getSourceOptions() {
     $options = [];
     /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
-    $entityTypeManager =\Drupal::service('entity_type.manager');
+    $entityTypeManager = \Drupal::service('entity_type.manager');
     $storage = $entityTypeManager->getStorage('external_content_source');
     $sources = $storage->loadMultiple();
     /** @var \Drupal\external_content\Entity\ExternalContent $source */
@@ -166,4 +168,5 @@ class ExternalContentItem extends FieldItemBase {
     }
     return $options;
   }
+
 }

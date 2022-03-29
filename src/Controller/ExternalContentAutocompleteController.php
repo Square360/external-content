@@ -5,11 +5,10 @@ namespace Drupal\external_content\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Entity\EntityAutocompleteMatcher;
 use Drupal\Core\KeyValueStore\KeyValueFactoryInterface;
-use Drupal\external_content\ExternalContentJsonApi;
-use Drupal\som_api_integration_externalreference\ExternalSourceJsonApi;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Drupal\external_content\ExternalContentJsonApi;
 
 /**
  * Returns responses for External Content routes.
@@ -64,12 +63,11 @@ class ExternalContentAutocompleteController extends ControllerBase {
     $input = $request->query->get('q');
 
     /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
-    $entityTypeManager =\Drupal::service('entity_type.manager');
+    $entityTypeManager = \Drupal::service('entity_type.manager');
     /** @var \Drupal\Core\Entity\EntityStorageInterface $storage */
     $storage = $entityTypeManager->getStorage('external_content_source');
     /** @var \Drupal\external_content\Entity\ExternalContent $source */
     $source = $storage->load($source_id);
-
 
     // Get the typed string from the URL, if it exists.
     if ($input) {

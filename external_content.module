@@ -1,7 +1,11 @@
 <?php
 
-use Drupal\external_content\ExternalContentJsonApi;
+/**
+ * @file
+ * External Content module.
+ */
 
+use Drupal\external_content\ExternalContentJsonApi;
 
 /**
  * Implements hook_theme().
@@ -53,8 +57,8 @@ function template_preprocess_external_content(&$variables) {
 
   $variables['attributes']['class'] = [
     'external-content',
-    'external-content--'. $source->getId(),
-    'external-content--'. $variables["doc"]["type"],
+    'external-content--' . $source->getId(),
+    'external-content--' . $variables["doc"]["type"],
   ];
-}
 
+}

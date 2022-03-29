@@ -3,7 +3,6 @@
 namespace Drupal\external_content\Plugin\Field\FieldWidget;
 
 use Drupal\Component\Utility\NestedArray;
-use Drupal\Core\Cache\Cache;
 use Drupal\Core\Entity\Element\EntityAutocomplete;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\WidgetBase;
@@ -21,12 +20,19 @@ use Drupal\Core\Url;
  */
 class ExternalContentWidget extends WidgetBase {
 
-  const acLimit = 5;
-
+  /**
+   * Returns list of available sources for this field as option list.
+   *
+   * @return array
+   *   Option list.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   */
   protected function getSourceOptions() {
     $options = [];
     /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
-    $entityTypeManager =\Drupal::service('entity_type.manager');
+    $entityTypeManager = \Drupal::service('entity_type.manager');
     $storage = $entityTypeManager->getStorage('external_content_source');
     $sources = $storage->loadMultiple();
 
@@ -37,7 +43,7 @@ class ExternalContentWidget extends WidgetBase {
       $options[$source->getId()] = $source->getLabel();
     }
 
-    if (sizeof($enabled_sources)) {
+    if (count($enabled_sources)) {
       return array_intersect_key($enabled_sources, $options);
     }
 
@@ -50,9 +56,12 @@ class ExternalContentWidget extends WidgetBase {
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
 
     $default_value = NULL;
-    // Add AJAX wrapper
-    $ajax_id_parts = array_merge($element["#field_parents"], [$items->getName(), $delta]);
-    $ajax_wrapper_id = implode("-",$ajax_id_parts) . "-ajax";
+    // Add AJAX wrapper.
+    $ajax_id_parts = array_merge(
+      $element["#field_parents"],
+      [$items->getName(), $delta]
+    );
+    $ajax_wrapper_id = implode("-", $ajax_id_parts) . "-ajax";
 
     $element['#element_validate'] = [
       [static::class, 'validate'],
@@ -60,19 +69,25 @@ class ExternalContentWidget extends WidgetBase {
 
     // Build a "label (target_id)' value that can be parsed for storage.
     if (!empty($items[$delta]->target_id)) {
-      $default_value = sprintf('%s (%d)', $items[$delta]->title, $items[$delta]->target_id);
+      $default_value = sprintf(
+        '%s (%d)',
+        $items[$delta]->title,
+        $items[$delta]->target_id
+      );
     }
 
     $element['source'] = [
       '#type' => 'select',
       '#title' => $this->t("Source"),
       '#options' => $this->getSourceOptions(),
-      '#default_value' => isset($items[$delta]->source) ? $items[$delta]->source : NULL,
+      '#default_value' => isset($items[$delta]->source)
+      ? $items[$delta]->source
+      : NULL,
       '#ajax' => [
-        'callback' => [$this, 'updateAutoCompleteSource'], //alternative notation
-        'disable-refocus' => FALSE, // Or TRUE to prevent re-focusing on the triggering element.
+        'callback' => [$this, 'updateAutoCompleteSource'],
+        'disable-refocus' => FALSE,
         'event' => 'change',
-        'wrapper' => $ajax_wrapper_id, // This element is updated with this AJAX callback.
+        'wrapper' => $ajax_wrapper_id,
         'progress' => [
           'type' => 'throbber',
           'message' => $this->t('Updating autocomplete...'),
@@ -97,11 +112,25 @@ class ExternalContentWidget extends WidgetBase {
     return $element;
   }
 
+  /**
+   * AJAX Callback which updates autocomplete field on source selection.
+   *
+   * @param array $form
+   *   Form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   Form state.
+   *
+   * @return array|mixed
+   *   Returns updated form.
+   */
   public function updateAutoCompleteSource(array &$form, FormStateInterface $form_state) {
 
     $triggering_element = $form_state->getTriggeringElement();
     $source_id = $form_state->getValue($triggering_element['#parents']);
-    $container = NestedArray::getValue($form, array_slice($triggering_element['#array_parents'], 0, -1));
+    $container = NestedArray::getValue(
+      $form,
+      array_slice($triggering_element['#array_parents'], 0, -1)
+    );
 
     $search = $container["search"];
 
@@ -114,7 +143,6 @@ class ExternalContentWidget extends WidgetBase {
     $search["#description"] = $autocomplete_path->toString();
     return $search;
   }
-
 
   /**
    * {@inheritdoc}
@@ -157,12 +185,6 @@ class ExternalContentWidget extends WidgetBase {
       $form_state->setValueForElement($element, '');
       return;
     }
-
-//    $response =   public function getTermQuery($term_id, $limit=1) {getNodeByNid('insights_article', $id);
-//
-//    if ($response === FALSE) {
-//      $form_state->setError($element, t('This article does not exist.'));
-//    }
 
   }
 

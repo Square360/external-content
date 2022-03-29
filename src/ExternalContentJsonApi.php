@@ -6,7 +6,6 @@ use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
-use Drupal\external_content\Entity\ExternalContent;
 
 /**
  * Contains all code specifically related to requesting & processing JSONAPI.
@@ -76,8 +75,6 @@ class ExternalContentJsonApi {
     ];
     return $external_image;
   }
-
-
 
   /**
    * Simple function to extract site from an url.
@@ -207,10 +204,6 @@ class ExternalContentJsonApi {
     ];
     $json = self::getJsonApi($endpoint, $query, FALSE);
     return $json;
-  }
-
-  public static function validate($is, $source_id) {
-
   }
 
   /**

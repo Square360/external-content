@@ -6,7 +6,7 @@ use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
- * external_content_source form.
+ * External Content Source form.
  *
  * @property \Drupal\external_content\ExternalContentSourceInterface $entity
  */
@@ -75,7 +75,9 @@ class ExternalContentSourceForm extends EntityForm {
       '#title' => $this->t('JSONAPI Includes'),
       '#maxlength' => 255,
       '#default_value' => $source->getIncludes(),
-      '#description' => $this->t("JSONAPI 'includes' string to request related data from "),
+      '#description' => $this->t(
+        "JSONAPI 'includes' to request related data along with entity"
+      ),
       '#required' => TRUE,
     ];
     return $form;

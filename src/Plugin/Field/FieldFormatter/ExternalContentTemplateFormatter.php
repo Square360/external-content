@@ -5,7 +5,6 @@ namespace Drupal\external_content\Plugin\Field\FieldFormatter;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\external_content\ExternalContentJsonApi;
 
 /**
  * Plugin implementation of the 'ExternalContentTemplate' formatter.
@@ -63,7 +62,7 @@ class ExternalContentTemplateFormatter extends FormatterBase {
       $id = $item->target_id;
 
       /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
-      $entityTypeManager =\Drupal::service('entity_type.manager');
+      $entityTypeManager = \Drupal::service('entity_type.manager');
       /** @var \Drupal\Core\Entity\EntityStorageInterface $storage */
       $storage = $entityTypeManager->getStorage('external_content_source');
       /** @var \Drupal\external_content\Entity\ExternalContent $source */
@@ -72,20 +71,20 @@ class ExternalContentTemplateFormatter extends FormatterBase {
       $data = $source->getContent($id, $this->getSetting('limit'));
 
       $render_children = [];
-      foreach($data['data'] as $entity) {
+      foreach ($data['data'] as $entity) {
         $render_children[] = [
           '#theme' => 'external_content',
           '#doc' => $entity,
           '#jsonapi' => $data,
           '#source_id' => $source_id,
-          '#source' => $source
+          '#source' => $source,
         ];
       }
 
       if (count($render_children) > 1) {
         $element[$delta] = [
-            '#theme' => 'item_list',
-            '#items' => $render_children
+          '#theme' => 'item_list',
+          '#items' => $render_children,
         ];
       }
       else {
@@ -95,6 +94,5 @@ class ExternalContentTemplateFormatter extends FormatterBase {
 
     return $element;
   }
-
 
 }

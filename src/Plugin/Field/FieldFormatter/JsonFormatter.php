@@ -6,7 +6,6 @@ use Drupal\Core\Field\FormatterBase;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\som_api_integration_externalreference\ExternalSourceJsonApi;
 
 /**
  * Plugin implementation of the 'externalreference_field' formatter.
@@ -21,14 +20,13 @@ use Drupal\som_api_integration_externalreference\ExternalSourceJsonApi;
  */
 class JsonFormatter extends FormatterBase {
 
-
   /**
    * {@inheritdoc}
    */
   public static function defaultSettings() {
     return [
-        'limit' => 1,
-      ] + parent::defaultSettings();
+      'limit' => 1,
+    ] + parent::defaultSettings();
   }
 
   /**
@@ -76,7 +74,7 @@ class JsonFormatter extends FormatterBase {
     $id = $item->target_id;
 
     /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
-    $entityTypeManager =\Drupal::service('entity_type.manager');
+    $entityTypeManager = \Drupal::service('entity_type.manager');
     /** @var \Drupal\Core\Entity\EntityStorageInterface $storage */
     $storage = $entityTypeManager->getStorage('external_content_source');
     /** @var \Drupal\external_content\Entity\ExternalContent $source */
@@ -91,9 +89,9 @@ class JsonFormatter extends FormatterBase {
         '#type' => 'html_tag',
         '#tag' => 'code',
         'child' => [
-          '#plain_text' => json_encode($data)
-        ]
-      ]
+          '#plain_text' => json_encode($data),
+        ],
+      ],
     ];
   }
 
