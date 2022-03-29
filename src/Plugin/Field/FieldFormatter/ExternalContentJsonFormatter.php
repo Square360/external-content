@@ -17,7 +17,7 @@ use Drupal\Core\Field\FieldItemInterface;
  *   }
  * )
  */
-class JsonFormatter extends FormatterBase {
+class ExternalContentJsonFormatter extends FormatterBase {
 
   /**
    * {@inheritdoc}
