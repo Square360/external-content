@@ -82,11 +82,9 @@ class ExternalContentWidget extends WidgetBase {
 
     /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
     foreach ($sources as $source) {
-      $options[$source->getId()] = $source->getLabel();
-    }
-
-    if (count($enabled_sources)) {
-      return array_intersect_key($enabled_sources, $options);
+      if (in_array($source->getId(), $enabled_sources)) {
+        $options[$source->getId()] = $source->getLabel();
+      }
     }
 
     return $options;
@@ -120,7 +118,8 @@ class ExternalContentWidget extends WidgetBase {
 
     $element['source'] = [
       '#type' => 'select',
-      '#title' => $this->t("Source"),
+      '#title' => $element['#title'],
+      '#description' => $this->t('Select a source for external content.'),
       '#options' => $this->getSourceOptions(),
       '#default_value' => $items[$delta]->source ?? NULL,
       '#ajax' => [
@@ -136,13 +135,13 @@ class ExternalContentWidget extends WidgetBase {
     ];
 
     $element['search'] = [
-      '#title' => $this->t('Search'),
+      '#description' => $this->t('Select item from external content.'),
       '#type' => 'textfield',
       '#prefix' => '<div id="' . $ajax_wrapper_id . '">',
       '#suffix' => '</div>',
       '#autocomplete_route_name' => 'external_content.autocomplete',
       '#autocomplete_route_parameters' => [
-        'source_id' => 'insights_article',
+        'source_id' => $items[$delta]->source,
       ],
       '#placeholder' => 'Type to search',
       '#default_value' => $default_value,
