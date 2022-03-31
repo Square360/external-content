@@ -179,7 +179,6 @@ class ExternalContentWidget extends WidgetBase {
 
     $autocomplete_path = Url::fromRoute('external_content.autocomplete', $route_params);
     $search["#attributes"]["data-autocomplete-path"] = $autocomplete_path->toString();
-    $search["#description"] = $autocomplete_path->toString();
     return $search;
   }
 
