@@ -40,7 +40,7 @@ class ExternalContentJsonFormatter extends ExternalContentFormatterBase {
     $id = $item->target_id;
 
     $storage = $this->entityTypeManager->getStorage('external_content_source');
-    /** @var \Drupal\external_content\Entity\ExternalContent $source */
+    /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
     $source = $storage->load($source_id);
 
     $data = $source->getContent($id, $this->getSetting('limit'));

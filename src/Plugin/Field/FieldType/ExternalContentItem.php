@@ -162,7 +162,7 @@ class ExternalContentItem extends FieldItemBase {
     $entityTypeManager = \Drupal::service('entity_type.manager');
     $storage = $entityTypeManager->getStorage('external_content_source');
     $sources = $storage->loadMultiple();
-    /** @var \Drupal\external_content\Entity\ExternalContent $source */
+    /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
     foreach ($sources as $source) {
       $options[$source->getId()] = $source->getLabel();
     }

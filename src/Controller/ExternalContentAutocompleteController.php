@@ -75,7 +75,7 @@ class ExternalContentAutocompleteController extends ControllerBase {
     $input = $request->query->get('q');
 
     $storage = $this->entityTypeManager->getStorage('external_content_source');
-    /** @var \Drupal\external_content\Entity\ExternalContent $source */
+    /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
     $source = $storage->load($source_id);
 
     // Get the typed string from the URL, if it exists.
