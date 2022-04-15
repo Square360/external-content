@@ -82,7 +82,7 @@ class ExternalContentWidget extends WidgetBase {
 
     /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
     foreach ($sources as $source) {
-      if (in_array($source->getId(), $enabled_sources)) {
+      if (empty($enabled_sources) || in_array($source->getId(), $enabled_sources)) {
         $options[$source->getId()] = $source->getLabel();
       }
     }
@@ -116,11 +116,13 @@ class ExternalContentWidget extends WidgetBase {
       );
     }
 
+    $source_options = $this->getSourceOptions();
+
     $element['source'] = [
       '#type' => 'select',
       '#title' => $element['#title'],
       '#description' => $this->t('Select a source for external content.'),
-      '#options' => $this->getSourceOptions(),
+      '#options' => $source_options,
       '#default_value' => $items[$delta]->source ?? NULL,
       '#ajax' => [
         'callback' => [$this, 'updateAutoCompleteSource'],
@@ -134,6 +136,8 @@ class ExternalContentWidget extends WidgetBase {
       ],
     ];
 
+    $default_source = $items[$delta]->source ?? array_key_first($source_options);
+
     $element['search'] = [
       '#description' => $this->t('Select item from external content.'),
       '#type' => 'textfield',
@@ -141,7 +145,7 @@ class ExternalContentWidget extends WidgetBase {
       '#suffix' => '</div>',
       '#autocomplete_route_name' => 'external_content.autocomplete',
       '#autocomplete_route_parameters' => [
-        'source_id' => $items[$delta]->source,
+        'source_id' => $default_source,
       ],
       '#placeholder' => 'Type to search',
       '#default_value' => $default_value,
