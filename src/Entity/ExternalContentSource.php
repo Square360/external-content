@@ -247,8 +247,12 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
     if ($this->isTermResource()) {
       return $this->getContentByTerm($id, $limit);
     }
-    else {
+    else if ($id & $id !== -1) {
       return $this->getContentByNid($id);
+    }
+    else {
+      return $this->getContentByRecency($limit);
+
     }
   }
 
@@ -299,6 +303,42 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
   }
 
   /**
+   * Get URL query for querying content by created date.
+   *
+   * @param int $limit
+   *   Max items to fetch.
+   *
+   * @return array
+   *   JSONAPI URL query object array.
+   */
+  public function getContentbyRecency($limit = 1) {
+    if ($cache = $this->getContentCache(__FUNCTION__, func_get_args())) {
+      return $cache->data;
+    }
+    else {
+      $endpoint = $this->getResource();
+      $query = $this->getContentByRecencyQuery($limit);
+      $data = ExternalContentJsonApi::getJsonApi($endpoint, $query);
+      $this->setContentCache($data, __FUNCTION__, func_get_args());
+      return $data;
+    }
+  }
+
+  /**
+   * Get URL query for querying most recent content.
+   *
+   * @return array
+   *   JSONAPI URL query object array.
+   */
+  public function getContentByRecencyQuery($limit=1) {
+    return [
+      'sort' => '-created',
+      'page[limit]' => $limit,
+      'include' => $this->getIncludes(),
+    ];
+  }
+
+  /**
    * Get URL query for querying content by node nid.
    *
    * @param int $nid
@@ -337,6 +377,28 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
     }
   }
 
+  /**
+   * Given appropriate item id will fetch content.
+   *
+   * @param int $id
+   *   Node nid.
+   *
+   * @return bool|mixed
+   *   JSONAPI response.
+   */
+  public function getRecentContent() {
+
+    if ($cache = $this->getContentCache(__FUNCTION__, func_get_args())) {
+      return $cache->data;
+    }
+    else {
+      $endpoint = $this->getResource();
+      $query = $this->getContentByNidQuery($id);
+      $data = ExternalContentJsonApi::getJsonApi($endpoint, $query);
+      $this->setContentCache($data, __FUNCTION__, func_get_args());
+      return $data;
+    }
+  }
   /**
    * Returns content cache key for this class based on method & args.
    *

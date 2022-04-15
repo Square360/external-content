@@ -139,7 +139,8 @@ class ExternalContentWidget extends WidgetBase {
     $default_source = $items[$delta]->source ?? array_key_first($source_options);
 
     $element['search'] = [
-      '#description' => $this->t('Select item from external content.'),
+      '#description' =>
+        $this->t("Select item from external content. For standard sources you can also select 'Most recent item(s)' instead of searching by title."),
       '#type' => 'textfield',
       '#prefix' => '<div id="' . $ajax_wrapper_id . '">',
       '#suffix' => '</div>',
@@ -176,6 +177,8 @@ class ExternalContentWidget extends WidgetBase {
     );
 
     $search = $container["search"];
+    // Clear value
+    $search["#value"] = '';
 
     $route_params = [
       "source_id" => $source_id,
@@ -194,6 +197,11 @@ class ExternalContentWidget extends WidgetBase {
 
     foreach ($values as $delta => &$item) {
       $item['delta'] = $delta;
+
+      /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
+      $source = empty($item["source"])
+        ? NULL
+        : $this->entityTypeManager->getStorage('external_content_source')->load($item["source"]);
 
       // Take "label (entity id)', match the ID from inside the parentheses.
       // @see \Drupal\Core\Entity\Element\EntityAutocomplete::extractEntityIdFromAutocompleteInput

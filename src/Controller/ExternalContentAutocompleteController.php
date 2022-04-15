@@ -105,6 +105,17 @@ class ExternalContentAutocompleteController extends ControllerBase {
       }
     }
 
+    if (!$source->isTermResource()) {
+      if (stripos('Most recent item', $input) !== FALSE) {
+        $val = $this->t('Most recent item(s)'). " (-1)";
+        array_unshift($results, [
+          'value' => $val,
+          'label' => $val,
+        ]);
+      }
+
+    }
+
     return new JsonResponse($results);
   }
 
