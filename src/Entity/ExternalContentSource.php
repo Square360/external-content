@@ -247,7 +247,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
     if ($this->isTermResource()) {
       return $this->getContentByTerm($id, $limit);
     }
-    elseif ($id & $id !== -1) {
+    elseif ($id && $id !== "-1") {
       return $this->getContentByNid($id);
     }
     else {
