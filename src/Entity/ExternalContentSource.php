@@ -247,7 +247,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
     if ($this->isTermResource()) {
       return $this->getContentByTerm($id, $limit);
     }
-    else if ($id & $id !== -1) {
+    elseif ($id & $id !== -1) {
       return $this->getContentByNid($id);
     }
     else {
@@ -330,7 +330,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    * @return array
    *   JSONAPI URL query object array.
    */
-  public function getContentByRecencyQuery($limit=1) {
+  public function getContentByRecencyQuery($limit = 1) {
     return [
       'sort' => '-created',
       'page[limit]' => $limit,
@@ -377,28 +377,6 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
     }
   }
 
-  /**
-   * Given appropriate item id will fetch content.
-   *
-   * @param int $id
-   *   Node nid.
-   *
-   * @return bool|mixed
-   *   JSONAPI response.
-   */
-  public function getRecentContent() {
-
-    if ($cache = $this->getContentCache(__FUNCTION__, func_get_args())) {
-      return $cache->data;
-    }
-    else {
-      $endpoint = $this->getResource();
-      $query = $this->getContentByNidQuery($id);
-      $data = ExternalContentJsonApi::getJsonApi($endpoint, $query);
-      $this->setContentCache($data, __FUNCTION__, func_get_args());
-      return $data;
-    }
-  }
   /**
    * Returns content cache key for this class based on method & args.
    *
