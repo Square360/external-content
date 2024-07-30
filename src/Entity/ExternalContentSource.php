@@ -245,7 +245,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    */
   public function getContent($id, $limit = 1) {
     if ($this->isTermResource()) {
-      return $this->getContentByTerm($id, $limit);
+      return $this->getContentByTerm([$id], $limit);
     }
     elseif ($id && $id !== "-1") {
       return $this->getContentByNid($id);
@@ -259,7 +259,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
   /**
    * Get URL query for querying content by taxonomy term.
    *
-   * @param int $term_id
+   * @param array $term_id
    *   Term tid.
    * @param int $limit
    *   Max items to fetch.
@@ -267,7 +267,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    * @return array
    *   JSONAPI URL query object array.
    */
-  public function getContentbyTermQuery($term_id, $limit = 1) {
+  public function getContentbyTermQuery(array $term_id, $limit = 1) {
     $term_field = $this->getTermField();
     $query = [
       "filter[${term_field}.drupal_internal__tid][value]" => $term_id,
@@ -281,7 +281,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
   /**
    * Given appropriate item id & max items will fetch content.
    *
-   * @param int $term_id
+   * @param array $term_id
    *   Term tid.
    * @param int $limit
    *   Max number of items to return.
@@ -289,7 +289,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    * @return bool|mixed
    *   JSONAPI response.
    */
-  public function getContentByTerm($term_id, $limit = 1) {
+  public function getContentByTerm(array $term_id, $limit = 1) {
     if ($cache = $this->getContentCache(__FUNCTION__, func_get_args())) {
       return $cache->data;
     }

@@ -127,6 +127,8 @@ class ExternalContentJsonApi {
    */
   public static function getJsonApi($endpoint, array $query = [], bool $skip_cache = FALSE) {
     $query_str = UrlHelper::buildQuery($query);
+    $query_str = preg_replace('/%5B[0-9]+%5D/simU', '', $query_str);
+
     $url = urldecode($endpoint . '?' . $query_str);
 
     $cache_key = 'jsonapi:' . $url;
