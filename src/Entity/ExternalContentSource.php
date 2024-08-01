@@ -390,7 +390,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    */
   protected function contentCacheKey(string $function, array $args) {
     $source_id = $this->id;
-    $key_args = implode('_', $args);
+    $key_args = json_encode($args);
     return "ExternalContentSource:$source_id:$function:$key_args";
   }
 
