@@ -2,4 +2,4 @@ name: "External Content"
 description: "Provides fields for referencing external content via JSONAPI"
 type: module
 package: "SOM"
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^8 || ^9 || ^10
