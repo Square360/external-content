@@ -270,7 +270,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
   public function getContentbyTermQuery(array $term_id, $limit = 1) {
     $term_field = $this->getTermField();
     $query = [
-      "filter[${term_field}.drupal_internal__tid][value]" => $term_id,
+      "filter[{$term_field}.drupal_internal__tid][value]" => $term_id,
       'include' => $this->getIncludes(),
       'page[limit]' => $limit,
       'sort' => '-created',
