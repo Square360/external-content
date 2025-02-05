@@ -259,7 +259,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
   /**
    * Get URL query for querying content by taxonomy term.
    *
-   * @param array $term_id
+   * @param array $term_ids
    *   Term tid.
    * @param int $limit
    *   Max items to fetch.
@@ -267,10 +267,11 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    * @return array
    *   JSONAPI URL query object array.
    */
-  public function getContentbyTermQuery(array $term_id, $limit = 1) {
+  public function getContentbyTermQuery(array $term_ids, $limit = 1) {
     $term_field = $this->getTermField();
+    $term_value = implode(',', $term_ids);
     $query = [
-      "filter[${term_field}.drupal_internal__tid][value]" => $term_id,
+      "filter[{$term_field}.drupal_internal__tid][value]" => $term_value,
       'include' => $this->getIncludes(),
       'page[limit]' => $limit,
       'sort' => '-created',
@@ -279,9 +280,41 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
   }
 
   /**
+   * Get URL query for querying content by taxonomy term.
+   *
+   * @param array $term_ids
+   *   Term tid.
+   * @param int $limit
+   *   Max items to fetch.
+   *
+   * @return array
+   *   JSONAPI URL query object array.
+   */
+  public function getContentbyMultiTermQuery(array $term_ids, $limit = 1) {
+    $term_field = $this->getTermField();
+
+    $query = [
+      'include' => $this->getIncludes(),
+      'page[limit]' => $limit,
+      'sort' => '-created',
+    ];
+
+    $groupname = "{$term_field}-group";
+    $query[] = "&filter[{$groupname}][group][conjunction]=OR";
+
+    foreach ($term_ids as $tid) {
+      $query[] = "&filter[tid-{$tid}][condition][memberOf]={$groupname}";
+      $query[] = "&filter[tid-{$tid}][condition][value]=" . $tid;
+      $query[] = "&filter[tid-{$tid}][condition][path]={$term_field}.drupal_internal__tid";
+    }
+
+    return $query;
+  }
+
+  /**
    * Given appropriate item id & max items will fetch content.
    *
-   * @param array $term_id
+   * @param array $term_ids
    *   Term tid.
    * @param int $limit
    *   Max number of items to return.
@@ -289,13 +322,18 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    * @return bool|mixed
    *   JSONAPI response.
    */
-  public function getContentByTerm(array $term_id, $limit = 1) {
+  public function getContentByTerm(array $term_ids, $limit = 1) {
     if ($cache = $this->getContentCache(__FUNCTION__, func_get_args())) {
       return $cache->data;
     }
     else {
       $endpoint = $this->getResource();
-      $query = $this->getContentbyTermQuery($term_id, $limit);
+      if (count($term_ids) > 1) {
+        $query = $this->getContentbyMultiTermQuery($term_ids, $limit);
+      }
+      else {
+        $query = $this->getContentbyTermQuery($term_ids, $limit);
+      }
       $data = ExternalContentJsonApi::getJsonApi($endpoint, $query);
       $this->setContentCache($data, __FUNCTION__, func_get_args());
       return $data;
