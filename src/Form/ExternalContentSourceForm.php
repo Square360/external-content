@@ -38,7 +38,7 @@ class ExternalContentSourceForm extends EntityForm {
       '#default_value' => $source->getId(),
       '#description' => $this->t("Label for the ExternalContent."),
       '#machine_name' => [
-        'exists' => [$this, 'exist'],
+        'exists' => ['\Drupal\external_content\Entity\ExternalContentSource', 'load'],
       ],
       '#disabled' => !$source->isNew(),
     ];
