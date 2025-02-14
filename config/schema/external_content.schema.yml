@@ -20,6 +20,9 @@ external_content.external_content_source.*:
     includes:
       type: string
       label: 'Includes'
+    cache_timeout:
+      type: integer
+      label: 'Cache Timeout'
 
 field.field_settings.external_content_item:
   type: mapping

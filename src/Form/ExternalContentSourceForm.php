@@ -80,6 +80,19 @@ class ExternalContentSourceForm extends EntityForm {
       ),
       '#required' => TRUE,
     ];
+
+    $form['cache_timeout'] = [
+      '#type' => 'number',
+      '#min' => 0,
+      '#title' => $this->t('Cache timeout'),
+      '#maxlength' => 255,
+      '#default_value' => $source->getCacheTimeout(),
+      '#description' => $this->t(
+        "Length of time, in seconds, for which we should cache results from this source. "
+      ),
+      '#required' => TRUE,
+    ];
+
     return $form;
   }
 
