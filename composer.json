@@ -2,5 +2,5 @@
   "name": "square360/external_content",
   "description": "Allows referencing & consuming JSONAPI data from other Drupal sites.",
   "type": "drupal-module",
-  "license": "proprietary",
+  "license": "proprietary"
 }

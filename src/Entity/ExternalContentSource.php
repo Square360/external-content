@@ -50,7 +50,7 @@ use Drupal\external_content\ExternalContentSourceInterface;
  *     "includes",
  *     "term_resource",
  *     "term_field",
- *     "cache_timeout"
+ *     "cache_timeout",
  *   }
  * )
  */
@@ -349,7 +349,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
       else {
         $query = $this->getContentbyTermQuery($term_ids, $limit);
       }
-      $data = $this->getJsonAPI($endpoint, $query);
+      $data = ExternalContentJsonApi::getJsonApi($endpoint, $query);
       $this->setContentCache($data, __FUNCTION__, func_get_args());
       return $data;
     }
@@ -371,7 +371,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
     else {
       $endpoint = $this->getResource();
       $query = $this->getContentByRecencyQuery($limit);
-      $data = $this->getJsonAPI($endpoint, $query);
+      $data = ExternalContentJsonApi::getJsonApi($endpoint, $query);
       $this->setContentCache($data, __FUNCTION__, func_get_args());
       return $data;
     }
@@ -424,7 +424,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
     else {
       $endpoint = $this->getResource();
       $query = $this->getContentByNidQuery($id);
-      $data = $this->getJsonApi($endpoint, $query);
+      $data = ExternalContentJsonApi::getJsonApi($endpoint, $query);
       $this->setContentCache($data, __FUNCTION__, func_get_args());
       return $data;
     }
@@ -480,14 +480,6 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
     $cache_key = $this->contentCacheKey($function, $args);
     $cache_timeout = time() + $this->getCacheTimeout();
     return \Drupal::cache()->set($cache_key, $data, $cache_timeout, []);
-  }
-
-  protected function getJsonAPI($endpoint, $query) {
-    $headers = [];
-    xdebug_break();
-    \Drupal::service('module_handler')->alter('external_content_headers', $headers, $this);
-
-    return ExternalContentJsonApi::getJsonApi($endpoint, $query, $headers);
   }
 
 }
