@@ -78,7 +78,7 @@ class ExternalContentSourceForm extends EntityForm {
       '#description' => $this->t(
         "JSONAPI 'includes' to request related data along with entity"
       ),
-      '#required' => TRUE,
+      '#required' => FALSE,
     ];
 
     $form['cache_timeout'] = [
