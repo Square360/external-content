@@ -489,9 +489,13 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    * @param $query
    * @return bool|mixed
    */
-  protected function getJsonAPI($endpoint, $query) {
+  protected function getJsonAPI($endpoint, $query=[]) {
+    // Allow modules to alter headers.
     $headers = [];
     \Drupal::service('module_handler')->alter('external_content_headers', $headers, $this);
+
+    // Allow modules to alter the query.
+    \Drupal::service('module_handler')->alter('external_content_query', $query, $this);
     return ExternalContentJsonApi::getJsonApi($endpoint, $query, $headers);
   }
 
