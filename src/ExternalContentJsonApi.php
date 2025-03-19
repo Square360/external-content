@@ -119,37 +119,32 @@ class ExternalContentJsonApi {
    *   Path to JSON resource.
    * @param array $query
    *   Query parameters to pass.
-   * @param bool $skip_cache
-   *   If true will ignore any existing cache value.
+   * @param array $headers
+   *   Headers to be added to the request.
    *
    * @return mixed|bool
    *   A JSON array
    */
-  public static function getJsonApi($endpoint, array $query = [], bool $skip_cache = FALSE) {
+  public static function getJsonApi($endpoint, array $query = [], array $headers = []) {
     $query_str = UrlHelper::buildQuery($query);
     $query_str = preg_replace('/%5B[0-9]+%5D/simU', '', $query_str);
 
     $url = urldecode($endpoint . '?' . $query_str);
 
-    $cache_key = 'jsonapi:' . $url;
-    if (!$skip_cache && $cache = \Drupal::cache()->get($cache_key)) {
-      $data = $cache->data;
+    $request = \Drupal::httpClient()->get($url, [
+      'headers' => $headers
+    ]);
+
+    if ($request->getStatusCode() == 200) {
+      $response = $request->getBody();
+      $data = Json::decode($response);
+      return $data;
     }
     else {
-      $request = \Drupal::httpClient()->get($url);
-      if ($request->getStatusCode() == 200) {
-        $response = $request->getBody();
-        $data = Json::decode($response);
-        \Drupal::cache()->set($cache_key, $data, time() + 60 * 60 * 3);
-      }
-      else {
-        $message = 'Cannot get resource: ' . $request->getStatusCode() . ' : ' . $url;
-        \Drupal::logger('som_api_integration_external_reference')->error($message);
-        return FALSE;
-      }
+      $message = 'Cannot get resource: ' . $request->getStatusCode() . ' : ' . $url;
+      \Drupal::logger('som_api_integration_external_reference')->error($message);
+      return FALSE;
     }
-    return $data;
-
   }
 
   /**
@@ -185,55 +180,6 @@ class ExternalContentJsonApi {
   }
 
   /**
-   * Given search resource and nid, will return node entity.
-   *
-   * @param string $source_key
-   *   Endpoint to be queried.
-   * @param int $nid
-   *   Node ID on endpoint source.
-   *
-   * @return mixed|bool
-   *   Node JSONAPI entity (cached)
-   */
-  public static function getNodeByNid($source_key, $nid) {
-    $sources = self::getReferenceSources();
-    $source = $sources[$source_key];
-    $endpoint = $source['resource'];
-    $includes = $source['include'];
-    $query = [
-      "filter[drupal_internal__nid]" => $nid,
-      'include' => $includes,
-    ];
-    $json = self::getJsonApi($endpoint, $query, FALSE);
-    return $json;
-  }
-
-  /**
-   * Get recent nodes from endpoint.
-   *
-   * @param string $source_key
-   *   Endpoint to be queried.
-   * @param int $limit
-   *   Number of items to return.
-   *
-   * @return mixed|bool
-   *   Returns JSON object or FALSE if empty.
-   */
-  public static function getRecentNodes($source_key, $limit = 10) {
-
-    $sources = self::getReferenceSources();
-    $source = $sources[$source_key];
-    $endpoint = $source['resource'];
-    $query = [
-      'page[limit]' => $limit,
-      'sort' => '-created',
-      'include' => $source['include'],
-    ];
-    $json = self::getJsonApi($endpoint, $query);
-    return $json;
-  }
-
-  /**
    * Simple function to extract site from a url.
    *
    * @param string $url
@@ -246,27 +192,6 @@ class ExternalContentJsonApi {
     $resource = parse_url(stripslashes($url));
     $url = $resource['scheme'] . '://' . $resource['host'];
     return $url;
-  }
-
-  /**
-   * Given an endpoint will return the source details.
-   *
-   * @param mixed $endpoint
-   *   The endpoint.
-   *
-   * @return bool|mixed
-   *   Returns array or FALSE.
-   */
-  public static function getSourceDataFromEndpoint($endpoint) {
-    $sources = self::getReferenceSources();
-    foreach ($sources as $name => $source) {
-      if (strpos($endpoint, $source['resource']) === 0) {
-        return array_merge($sources[$name], ['id' => $name]);
-      }
-    }
-    $message = 'Unknown resource: ' . $endpoint;
-    \Drupal::logger('som_api_integration_external_reference')->notice($message);
-    return FALSE;
   }
 
 }

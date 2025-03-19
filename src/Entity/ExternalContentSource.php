@@ -50,14 +50,13 @@ use Drupal\external_content\ExternalContentSourceInterface;
  *     "includes",
  *     "term_resource",
  *     "term_field",
+ *     "cache_timeout"
  *   }
  * )
  */
 class ExternalContentSource extends ConfigEntityBase implements ExternalContentSourceInterface {
 
   const LOOKUP_LIMIT = 5;
-
-  const CACHE_TIMEOUT = (60 * 60);
 
   /**
    * The ExternalContentSource ID.
@@ -102,13 +101,20 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
   protected $includes;
 
   /**
+   * Cache timeout.
+   *
+   * @var int
+   */
+  protected int $cache_timeout = 0;
+
+  /**
    * Returns ID.
    *
    * @return int|string|null
    *   ID.
    */
   public function getId() {
-    return $this->id();
+    return $this->id;
   }
 
   /**
@@ -151,6 +157,15 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
     return $this->includes;
   }
 
+  /**
+   * Returns cache timeout.
+   *
+   * @return int
+   *   Cache timeout.
+   */
+  public function getCacheTimeout() {
+    return $this->cache_timeout;
+  }
   /**
    * Returns resource.
    *
@@ -334,7 +349,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
       else {
         $query = $this->getContentbyTermQuery($term_ids, $limit);
       }
-      $data = ExternalContentJsonApi::getJsonApi($endpoint, $query);
+      $data = $this->getJsonAPI($endpoint, $query);
       $this->setContentCache($data, __FUNCTION__, func_get_args());
       return $data;
     }
@@ -356,7 +371,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
     else {
       $endpoint = $this->getResource();
       $query = $this->getContentByRecencyQuery($limit);
-      $data = ExternalContentJsonApi::getJsonApi($endpoint, $query);
+      $data = $this->getJsonAPI($endpoint, $query);
       $this->setContentCache($data, __FUNCTION__, func_get_args());
       return $data;
     }
@@ -409,7 +424,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
     else {
       $endpoint = $this->getResource();
       $query = $this->getContentByNidQuery($id);
-      $data = ExternalContentJsonApi::getJsonApi($endpoint, $query);
+      $data = $this->getJsonApi($endpoint, $query);
       $this->setContentCache($data, __FUNCTION__, func_get_args());
       return $data;
     }
@@ -463,7 +478,25 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    */
   protected function setContentCache($data, string $function, array $args) {
     $cache_key = $this->contentCacheKey($function, $args);
-    return \Drupal::cache()->set($cache_key, $data, time() + self::CACHE_TIMEOUT, []);
+    $cache_timeout = time() + $this->getCacheTimeout();
+    return \Drupal::cache()->set($cache_key, $data, $cache_timeout, []);
+  }
+
+  /**
+   * This is a wrapper for ExternalContentJsonApi::getJsonApi.
+   *
+   * @param $endpoint
+   * @param $query
+   * @return bool|mixed
+   */
+  protected function getJsonAPI($endpoint, $query=[]) {
+    // Allow modules to alter headers.
+    $headers = [];
+    \Drupal::service('module_handler')->alter('external_content_headers', $headers, $this);
+
+    // Allow modules to alter the query.
+    \Drupal::service('module_handler')->alter('external_content_query', $query, $this);
+    return ExternalContentJsonApi::getJsonApi($endpoint, $query, $headers);
   }
 
 }

@@ -38,7 +38,7 @@ class ExternalContentSourceForm extends EntityForm {
       '#default_value' => $source->getId(),
       '#description' => $this->t("Label for the ExternalContent."),
       '#machine_name' => [
-        'exists' => [$this, 'exist'],
+        'exists' => ['\Drupal\external_content\Entity\ExternalContentSource', 'load'],
       ],
       '#disabled' => !$source->isNew(),
     ];
@@ -78,8 +78,21 @@ class ExternalContentSourceForm extends EntityForm {
       '#description' => $this->t(
         "JSONAPI 'includes' to request related data along with entity"
       ),
+      '#required' => FALSE,
+    ];
+
+    $form['cache_timeout'] = [
+      '#type' => 'number',
+      '#min' => 0,
+      '#title' => $this->t('Cache timeout'),
+      '#maxlength' => 255,
+      '#default_value' => $source->getCacheTimeout(),
+      '#description' => $this->t(
+        "Length of time, in seconds, for which we should cache results from this source. "
+      ),
       '#required' => TRUE,
     ];
+
     return $form;
   }
 
