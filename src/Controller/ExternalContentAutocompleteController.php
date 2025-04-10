@@ -86,7 +86,7 @@ class ExternalContentAutocompleteController extends ControllerBase {
 
       $endpoint = $source->getLookupResource();
       $query = $source->getLookupQuery($input);
-      $json = $jsonapi->getJsonApi($endpoint, $query, TRUE)['data'];
+      $json = $jsonapi->getJsonApi($endpoint, $query)['data'];
 
       if ($json !== FALSE) {
 
