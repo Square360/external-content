@@ -55,7 +55,10 @@ class ExternalContentJsonApi {
    *   Array of image values.
    */
   public static function extractMediaImage($json, $jsonapi_request, $field_name) {
-
+    if (empty($json["relationships"][$field_name]["data"])) {
+      // Return false if no media relationship exists.
+      return FALSE;
+    }
     $field_image_id = $json["relationships"][$field_name]["data"]["id"];
     $image = self::getIncludedDataById($jsonapi_request, $field_image_id);
     $image_file_id = $image["relationships"]["field_media_image"]["data"]["id"];
