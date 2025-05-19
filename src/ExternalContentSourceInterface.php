@@ -170,11 +170,13 @@ interface ExternalContentSourceInterface extends ConfigEntityInterface {
    *
    * @param int $limit
    *   Max items to fetch.
+   * @param array $extra_arguments
+   *   Extra arguments to pass into query.
    *
    * @return array
    *   JSONAPI URL query object array.
    */
-  public function getContentbyRecency($limit = 1);
+  public function getContentbyRecency($limit = 1, $extra_arguments = []);
 
   /**
    * Get URL query for querying most recent content.

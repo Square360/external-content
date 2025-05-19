@@ -360,17 +360,18 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    *
    * @param int $limit
    *   Max items to fetch.
-   *
+   * @param array $extra_arguments
+   *   Extra arguments to pass into query.
    * @return array
    *   JSONAPI URL query object array.
    */
-  public function getContentbyRecency($limit = 1) {
+  public function getContentbyRecency($limit = 1, $extra_arguments = []) {
     if ($cache = $this->getContentCache(__FUNCTION__, func_get_args())) {
       return $cache->data;
     }
     else {
       $endpoint = $this->getResource();
-      $query = $this->getContentByRecencyQuery($limit);
+      $query = array_merge($this->getContentByRecencyQuery($limit), $extra_arguments);
       $data = $this->getJsonAPI($endpoint, $query);
       $this->setContentCache($data, __FUNCTION__, func_get_args());
       return $data;
