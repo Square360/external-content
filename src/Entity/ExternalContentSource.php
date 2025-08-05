@@ -46,11 +46,10 @@ use Drupal\external_content\ExternalContentSourceInterface;
  *   config_export = {
  *     "id",
  *     "label",
+ *     "type",
  *     "resource",
- *     "includes",
- *     "term_resource",
- *     "term_field",
- *     "cache_timeout"
+ *     "cache_timeout",
+ *     "plugin_configuration"
  *   }
  * )
  */
@@ -64,6 +63,13 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    * @var string
    */
   protected $id;
+
+  /**
+   * External source type.
+   *
+   * @var string
+   */
+  protected $type;
 
   /**
    * The ExternalContentSource label.
@@ -106,6 +112,13 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    * @var int
    */
   protected int $cache_timeout = 0;
+
+  /**
+   * Plugin configuration.
+   *
+   * @var array
+   */
+  protected $plugin_configuration = [];
 
   /**
    * Returns ID.
@@ -166,6 +179,27 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
   public function getCacheTimeout() {
     return $this->cache_timeout;
   }
+
+  /**
+   * Returns type.
+   *
+   * @return string
+   *   External source type.
+   */
+  public function getType() {
+    return $this->type;
+  }
+
+  /**
+   * Returns plugin configuration.
+   *
+   * @return array
+   *   Plugin configuration array.
+   */
+  public function getPluginConfiguration() {
+    return $this->plugin_configuration ?: [];
+  }
+
   /**
    * Returns resource.
    *

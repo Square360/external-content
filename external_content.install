@@ -1,0 +1,65 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the external_content module.
+ */
+
+use Drupal\external_content\Entity\ExternalContentSource;
+
+/**
+ * Migrate term_resource, term_field, and includes fields to plugin_configuration.
+ */
+function external_content_update_9001() {
+  $config_factory = \Drupal::configFactory();
+  $external_content_sources = $config_factory->listAll('external_content.external_content_source.');
+
+  foreach ($external_content_sources as $config_name) {
+    $config = $config_factory->getEditable($config_name);
+    $data = $config->getRawData();
+
+    // Get the current field values
+    $term_resource = $data['term_resource'] ?? '';
+    $term_field = $data['term_field'] ?? '';
+    $includes = $data['includes'] ?? '';
+
+    // Set the plugin type based on whether term_resource has a value
+    $plugin_type = !empty($term_resource) ? 'jsonapi_term' : 'jsonapi_title';
+    $config->set('type', $plugin_type);
+
+    // Only migrate if we have values to migrate
+    if (!empty($term_resource) || !empty($term_field) || !empty($includes)) {
+      // Get existing plugin configuration or create empty array
+      $plugin_configuration = $data['plugin_configuration'] ?? [];
+
+      // Move the fields into plugin_configuration
+      if (!empty($term_resource)) {
+        $plugin_configuration['term_resource'] = $term_resource;
+      }
+      if (!empty($term_field)) {
+        $plugin_configuration['term_field'] = $term_field;
+      }
+      if (!empty($includes)) {
+        $plugin_configuration['includes'] = $includes;
+      }
+
+      // Update the configuration
+      $config->set('plugin_configuration', $plugin_configuration);
+    }
+
+    // Remove the old fields from the main configuration
+    $config->clear('term_resource');
+    $config->clear('term_field');
+    $config->clear('includes');
+
+    // Save the configuration
+    $config->save();
+
+    \Drupal::logger('external_content')->info('Migrated configuration for external content source: @name with type: @type', [
+      '@name' => str_replace('external_content.external_content_source.', '', $config_name),
+      '@type' => $plugin_type
+    ]);
+  }
+
+  return t('Migrated term_resource, term_field, and includes fields to plugin_configuration and set appropriate plugin types for all external content sources.');
+}
