@@ -71,9 +71,8 @@ class ExternalContentSourceForm extends EntityForm {
     ];
 
     $form['includes'] = [
-      '#type' => 'textfield',
+      '#type' => 'textarea',
       '#title' => $this->t('JSONAPI Includes'),
-      '#maxlength' => 255,
       '#default_value' => $source->getIncludes(),
       '#description' => $this->t(
         "JSONAPI 'includes' to request related data along with entity"

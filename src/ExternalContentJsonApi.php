@@ -132,7 +132,13 @@ class ExternalContentJsonApi {
     $query_str = UrlHelper::buildQuery($query);
     $query_str = preg_replace('/%5B[0-9]+%5D/simU', '', $query_str);
 
-    $url = urldecode($endpoint . '?' . $query_str);
+    // This allows for custom arguments to be added onto the endpoints.
+    if (str_contains($endpoint, '?')) {
+      $url = urldecode($endpoint . '&' . $query_str);
+    }
+    else {
+      $url = urldecode($endpoint . '?' . $query_str);
+    }
 
     $request = \Drupal::httpClient()->get($url, [
       'headers' => $headers
