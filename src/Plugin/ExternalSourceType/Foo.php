@@ -18,7 +18,30 @@ use Drupal\external_content\ExternalSourceTypePluginBase;
 )]
 final class Foo extends ExternalSourceTypePluginBase {
 
-  function externalSourceConfigForm(array &$form_container, array &$plugin_configuration) {
+  /**
+   * {@inheritdoc}
+   */
+  public function handleAutocomplete($source, string $input): array {
+    // Dummy implementation - returns empty array
+    // In a real implementation, this would search the external source
+    // and return matching results based on the input string
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getContent($source, $id, int $limit = 1) {
+    // Dummy implementation - returns false to indicate no content found
+    // In a real implementation, this would fetch content from the external source
+    // based on the provided ID and limit
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function externalSourceConfigForm(array &$form_container, array &$plugin_configuration) {
     // This method can be used to add configuration options for the Foo source type.
     $form_container['foo_setting'] = [
       '#type' => 'textfield',
@@ -28,4 +51,5 @@ final class Foo extends ExternalSourceTypePluginBase {
       '#required' => FALSE,
     ];
   }
+
 }

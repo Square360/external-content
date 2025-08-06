@@ -27,5 +27,32 @@ interface ExternalSourceTypeInterface {
    */
   public function externalSourceConfigForm(array &$form_container, array &$plugin_configuration);
 
+  /**
+   * Handles autocomplete functionality for this external source type.
+   *
+   * @param \Drupal\external_content\Entity\ExternalContentSource $source
+   *   The external content source entity.
+   * @param string $input
+   *   The user input string.
+   *
+   * @return array
+   *   Array of autocomplete results with 'value' and 'label' keys.
+   */
+  public function handleAutocomplete($source, string $input): array;
+
+  /**
+   * Gets content from the external source.
+   *
+   * @param \Drupal\external_content\Entity\ExternalContentSource $source
+   *   The external content source entity.
+   * @param int $id
+   *   Entity id (nid, tid, or -1 for most recent).
+   * @param int $limit
+   *   Max number of items to return.
+   *
+   * @return bool|mixed
+   *   External content data.
+   */
+  public function getContent($source, $id, int $limit = 1);
 
 }

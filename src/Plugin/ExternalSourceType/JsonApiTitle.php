@@ -6,6 +6,7 @@ namespace Drupal\external_content\Plugin\ExternalSourceType;
 
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\external_content\Attribute\ExternalSourceType;
+use Drupal\external_content\ExternalContentJsonApi;
 use Drupal\external_content\ExternalSourceTypePluginBase;
 
 /**
@@ -18,7 +19,7 @@ use Drupal\external_content\ExternalSourceTypePluginBase;
 )]
 final class JsonApiTitle extends ExternalSourceTypePluginBase {
 
-  function externalSourceConfigForm(array &$form_container, array &$plugin_configuration) {
+  function externalSourceConfigForm(array &$form_container, array &$plugin_configuration): array {
 
     $includes = $plugin_configuration['includes'] = $plugin_configuration['includes'] ?? '';
 
@@ -27,11 +28,118 @@ final class JsonApiTitle extends ExternalSourceTypePluginBase {
       '#title' => $this->t('JSONAPI Includes'),
       '#default_value' => $includes,
       '#description' => $this->t(
-        "JSONAPI 'includes' parameter which will be sent with each request."
+        "JSONAPI 'includes' to request related data along with entity"
       ),
       '#required' => FALSE,
     ];
 
+    return $form_container;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function handleAutocomplete($source, string $input): array {
+    $results = [];
+
+    $endpoint = $this->getLookupResource($source);
+    $query = $this->getLookupQuery($source, $input);
+    $headers = [];
+    $this->alterRequest($query, $headers, $source, 'handleAutocomplete');
+    $json = ExternalContentJsonApi::getJsonApi($endpoint, $query, $headers)['data'] ?? [];
+
+    if ($json !== FALSE && !empty($json)) {
+      foreach ($json as $result) {
+        $drupal_id = !empty($result['attributes']['drupal_internal__nid'])
+          ? $result['attributes']['drupal_internal__nid']
+          : $result['attributes']['drupal_internal__tid'];
+        $title = !empty($result['attributes']['title'])
+          ? $result['attributes']['title']
+          : $result['attributes']['name'];
+        $results[] = [
+          'value' => "$title ($drupal_id)",
+          'label' => "$title ($drupal_id)",
+        ];
+      }
+    }
+
+    // Add "Most recent item" option for title-based sources
+    if (stripos('Most recent item', $input) !== FALSE) {
+      $val = $this->t('Most recent item(s) (:id)', [':id' => -1]);
+      array_unshift($results, [
+        'value' => $val,
+        'label' => $val,
+      ]);
+    }
+
+    return $results;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getContent($source, $id, int $limit = 1) {
+    if ($id && $id !== "-1") {
+      return $this->getContentByNid($source, $id);
+    }
+    else {
+      return $this->getContentByRecency($source, $limit);
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getLookupResource($source): string {
+    return $source->getResource();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getLookupQuery($source, string $input): array {
+    return [
+      'filter[title][operator]' => 'CONTAINS',
+      'filter[title][value]' => $input,
+      'page[limit]' => 5,
+    ];
+  }
+
+  /**
+   * Get content by node ID.
+   */
+  protected function getContentByNid($source, $id) {
+    $endpoint = $source->getResource();
+    $query = [
+      "filter[drupal_internal__nid]" => $id,
+      'include' => $this->getIncludes($source),
+    ];
+    $headers = [];
+    $this->alterRequest($query, $headers, $source, 'getContent');
+    return ExternalContentJsonApi::getJsonApi($endpoint, $query, $headers);
+  }
+
+  /**
+   * Get content by recency.
+   */
+  protected function getContentByRecency($source, $limit = 1, $extra_arguments = []) {
+    $endpoint = $source->getResource();
+    $query = array_merge([
+      'sort' => '-created',
+      'page[limit]' => $limit,
+      'include' => $this->getIncludes($source),
+    ], $extra_arguments);
+    $headers = [];
+    $this->alterRequest($query, $headers, $source, 'getContent');
+    return ExternalContentJsonApi::getJsonApi($endpoint, $query, $headers);
+  }
+
+  /**
+   * Get includes from plugin configuration.
+   */
+  protected function getIncludes($source): string {
+    $plugin_config = $source->getPluginConfiguration();
+    return $plugin_config['includes'] ?? '';
   }
 
 }

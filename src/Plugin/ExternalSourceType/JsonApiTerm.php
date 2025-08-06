@@ -7,6 +7,7 @@ namespace Drupal\external_content\Plugin\ExternalSourceType;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\external_content\Attribute\ExternalSourceType;
 use Drupal\external_content\ExternalSourceTypePluginBase;
+use Drupal\external_content\ExternalContentJsonApi;
 
 /**
  * Plugin implementation of the external_source_type.
@@ -23,6 +24,16 @@ final class JsonApiTerm extends ExternalSourceTypePluginBase {
     $includes = $plugin_configuration['includes'] ?? '';
     $term_resource = $plugin_configuration['term_resource'] ?? '';
     $term_field = $plugin_configuration['term_field'] ?? '';
+
+    $form_container['includes'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('JSONAPI Includes'),
+      '#default_value' => $includes,
+      '#description' => $this->t(
+        "JSONAPI 'includes' to request related data along with entity"
+      ),
+      '#required' => FALSE,
+    ];
 
     $form_container['term_resource'] = [
       '#type' => 'textfield',
@@ -42,17 +53,128 @@ final class JsonApiTerm extends ExternalSourceTypePluginBase {
       '#required' => FALSE,
     ];
 
-    $form_container['includes'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('JSONAPI Includes'),
-      '#default_value' => $includes,
-      '#description' => $this->t(
-        "JSONAPI 'includes' to request related data along with entity"
-      ),
-      '#required' => FALSE,
+    return $form_container;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function handleAutocomplete($source, string $input): array {
+    $results = [];
+
+    $endpoint = $this->getLookupResource($source);
+    $query = $this->getLookupQuery($source, $input);
+    $headers = [];
+    $this->alterRequest($query, $headers, $source, 'handleAutocomplete');
+    $json = ExternalContentJsonApi::getJsonApi($endpoint, $query, $headers)['data'] ?? [];
+
+    if ($json !== FALSE && !empty($json)) {
+      foreach ($json as $result) {
+        $drupal_id = !empty($result['attributes']['drupal_internal__nid'])
+          ? $result['attributes']['drupal_internal__nid']
+          : $result['attributes']['drupal_internal__tid'];
+        $title = !empty($result['attributes']['title'])
+          ? $result['attributes']['title']
+          : $result['attributes']['name'];
+        $results[] = [
+          'value' => "$title ($drupal_id)",
+          'label' => "$title ($drupal_id)",
+        ];
+      }
+    }
+
+    return $results;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getContent($source, $id, int $limit = 1) {
+    return $this->getContentByTerm($source, [$id], $limit);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getLookupResource($source): string {
+    $plugin_config = $source->getPluginConfiguration();
+    $term_resource = $plugin_config['term_resource'] ?? '';
+    return !empty($term_resource) ? $term_resource : $source->getResource();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getLookupQuery($source, string $input): array {
+    return [
+      "filter[name][operator]" => "CONTAINS",
+      "filter[name][value]" => $input,
+      'page[limit]' => 5,
+    ];
+  }
+
+  /**
+   * Get content by taxonomy term.
+   */
+  protected function getContentByTerm($source, array $term_ids, $limit = 1) {
+    $endpoint = $source->getResource();
+    if (count($term_ids) > 1) {
+      $query = $this->getContentByMultiTermQuery($source, $term_ids, $limit);
+    }
+    else {
+      $query = $this->getContentByTermQuery($source, $term_ids, $limit);
+    }
+    $headers = [];
+    $this->alterRequest($query, $headers, $source, 'getContent');
+    return ExternalContentJsonApi::getJsonApi($endpoint, $query, $headers);
+  }
+
+  /**
+   * Get URL query for querying content by taxonomy term.
+   */
+  protected function getContentByTermQuery($source, array $term_ids, $limit = 1) {
+    $plugin_config = $source->getPluginConfiguration();
+    $term_field = $plugin_config['term_field'] ?? '';
+    $term_value = implode(',', $term_ids);
+    return [
+      "filter[{$term_field}.drupal_internal__tid][value]" => $term_value,
+      'include' => $this->getIncludes($source),
+      'page[limit]' => $limit,
+      'sort' => '-created',
+    ];
+  }
+
+  /**
+   * Get URL query for querying content by multiple taxonomy terms.
+   */
+  protected function getContentByMultiTermQuery($source, array $term_ids, $limit = 1) {
+    $plugin_config = $source->getPluginConfiguration();
+    $term_field = $plugin_config['term_field'] ?? '';
+
+    $query = [
+      'include' => $this->getIncludes($source),
+      'page[limit]' => $limit,
+      'sort' => '-created',
     ];
 
-    return $form_container;
+    $groupname = "{$term_field}-group";
+    $query[] = "&filter[{$groupname}][group][conjunction]=OR";
+
+    foreach ($term_ids as $tid) {
+      $query[] = "&filter[tid-{$tid}][condition][memberOf]={$groupname}";
+      $query[] = "&filter[tid-{$tid}][condition][value]=" . $tid;
+      $query[] = "&filter[tid-{$tid}][condition][path]={$term_field}.drupal_internal__tid";
+    }
+
+    return $query;
+  }
+
+  /**
+   * Get includes from plugin configuration.
+   */
+  protected function getIncludes($source): string {
+    $plugin_config = $source->getPluginConfiguration();
+    return $plugin_config['includes'] ?? '';
   }
 
 }

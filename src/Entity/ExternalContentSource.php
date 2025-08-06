@@ -86,20 +86,6 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
   protected $resource;
 
   /**
-   * Optional term bundle to extract list of terms.
-   *
-   * @var string
-   */
-  protected $term_resource;
-
-  /**
-   * Optional term if this source should be filtered by term.
-   *
-   * @var string
-   */
-  protected $term_field;
-
-  /**
    * Optional list of includes to request related data from JSONAPI.
    *
    * @var string
@@ -140,25 +126,7 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
     return $this->label;
   }
 
-  /**
-   * Returns term resource.
-   *
-   * @return string
-   *   Term resource.
-   */
-  public function getTermResource() {
-    return $this->term_resource;
-  }
 
-  /**
-   * Returns term field.
-   *
-   * @return string
-   *   Term field name.
-   */
-  public function getTermField() {
-    return $this->term_field;
-  }
 
   /**
    * Returns string of JSONAPI includes.
@@ -210,27 +178,45 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
     return $this->resource;
   }
 
-  /**
-   * Returns whether this resource is a simple node resource or node by term.
-   *
-   * @return bool
-   *   True if term resource.
-   */
-  public function isTermResource(): bool {
-    return !empty($this->getTermResource());
-  }
+
 
   /**
-   * Returns appropriate lookup endpoint.
+   * Given appropriate item id & max items will fetch content.
    *
-   * @return string
-   *   JSONAPI endpoint.
+   * @param int $id
+   *   Entity id (nid or tid depending on source).
+   * @param int $limit
+   *   Max number of items to return.
+   *
+   * @return bool|mixed
+   *   External content data.
    */
-  public function getLookupResource(): string {
-    return $this->isTermResource()
-      ? $this->getTermResource()
-      : $this->getResource();
+  public function getContent($id, $limit = 1) {
+    if ($cache = $this->getContentCache(__FUNCTION__, func_get_args())) {
+      return $cache->data;
+    }
+
+    $plugin_type = $this->getType();
+    if ($plugin_type) {
+      try {
+        $plugin_manager = \Drupal::service('plugin.manager.external_source_type');
+        $plugin = $plugin_manager->createInstance($plugin_type);
+        $data = $plugin->getContent($this, $id, $limit);
+        $this->setContentCache($data, __FUNCTION__, func_get_args());
+        return $data;
+      } catch (\Exception $e) {
+        \Drupal::logger('external_content')->error('Error getting content for source @source_id: @error', [
+          '@source_id' => $this->id,
+          '@error' => $e->getMessage(),
+        ]);
+        return FALSE;
+      }
+    }
+
+    return FALSE;
   }
+
+
 
   /**
    * Given input string returns query for entity lookup.
@@ -242,227 +228,21 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    *   URL Query object array.
    */
   public function getLookupQuery($input): array {
-    return $this->isTermResource()
-      ? $this->getLookupQueryTerm($input)
-      : $this->getLookupQueryTitle($input);
-  }
-
-  /**
-   * Builds lookup query for node title search.
-   *
-   * @param string $input
-   *   Search string.
-   *
-   * @return array
-   *   URL Query object array.
-   */
-  public function getLookupQueryTitle($input) {
-    return [
-      'filter[title][operator]' => 'CONTAINS',
-      'filter[title][value]' => $input,
-      'page[limit]' => self::LOOKUP_LIMIT,
-    ];
-  }
-
-  /**
-   * Builds lookup query for term name search.
-   *
-   * @param string $input
-   *   Search string.
-   *
-   * @return array
-   *   URL Query object array.
-   */
-  public function getLookupQueryTerm($input) {
-    return [
-      "filter[name][operator]" => "CONTAINS",
-      "filter[name][value]" => $input,
-      'page[limit]' => self::LOOKUP_LIMIT,
-    ];
-  }
-
-  /**
-   * Given appropriate item id & max items will fetch content.
-   *
-   * @param int $id
-   *   Entity id (nid or tid depending on source).
-   * @param int $limit
-   *   Max number of items to return.
-   *
-   * @return bool|mixed
-   *   JSONAPI data.
-   */
-  public function getContent($id, $limit = 1) {
-    if ($this->isTermResource()) {
-      return $this->getContentByTerm([$id], $limit);
-    }
-    elseif ($id && $id !== "-1") {
-      return $this->getContentByNid($id);
-    }
-    else {
-      return $this->getContentByRecency($limit);
-
-    }
-  }
-
-  /**
-   * Get URL query for querying content by taxonomy term.
-   *
-   * @param array $term_ids
-   *   Term tid.
-   * @param int $limit
-   *   Max items to fetch.
-   *
-   * @return array
-   *   JSONAPI URL query object array.
-   */
-  public function getContentbyTermQuery(array $term_ids, $limit = 1) {
-    $term_field = $this->getTermField();
-    $term_value = implode(',', $term_ids);
-    $query = [
-      "filter[{$term_field}.drupal_internal__tid][value]" => $term_value,
-      'include' => $this->getIncludes(),
-      'page[limit]' => $limit,
-      'sort' => '-created',
-    ];
-    return $query;
-  }
-
-  /**
-   * Get URL query for querying content by taxonomy term.
-   *
-   * @param array $term_ids
-   *   Term tid.
-   * @param int $limit
-   *   Max items to fetch.
-   *
-   * @return array
-   *   JSONAPI URL query object array.
-   */
-  public function getContentbyMultiTermQuery(array $term_ids, $limit = 1) {
-    $term_field = $this->getTermField();
-
-    $query = [
-      'include' => $this->getIncludes(),
-      'page[limit]' => $limit,
-      'sort' => '-created',
-    ];
-
-    $groupname = "{$term_field}-group";
-    $query[] = "&filter[{$groupname}][group][conjunction]=OR";
-
-    foreach ($term_ids as $tid) {
-      $query[] = "&filter[tid-{$tid}][condition][memberOf]={$groupname}";
-      $query[] = "&filter[tid-{$tid}][condition][value]=" . $tid;
-      $query[] = "&filter[tid-{$tid}][condition][path]={$term_field}.drupal_internal__tid";
-    }
-
-    return $query;
-  }
-
-  /**
-   * Given appropriate item id & max items will fetch content.
-   *
-   * @param array $term_ids
-   *   Term tid.
-   * @param int $limit
-   *   Max number of items to return.
-   *
-   * @return bool|mixed
-   *   JSONAPI response.
-   */
-  public function getContentByTerm(array $term_ids, $limit = 1) {
-    if ($cache = $this->getContentCache(__FUNCTION__, func_get_args())) {
-      return $cache->data;
-    }
-    else {
-      $endpoint = $this->getResource();
-      if (count($term_ids) > 1) {
-        $query = $this->getContentbyMultiTermQuery($term_ids, $limit);
+    $plugin_type = $this->getType();
+    if ($plugin_type) {
+      try {
+        $plugin_manager = \Drupal::service('plugin.manager.external_source_type');
+        $plugin = $plugin_manager->createInstance($plugin_type);
+        return $plugin->getLookupQuery($this, $input);
+      } catch (\Exception $e) {
+        \Drupal::logger('external_content')->error('Error getting lookup query for source @source_id: @error', [
+          '@source_id' => $this->id,
+          '@error' => $e->getMessage(),
+        ]);
       }
-      else {
-        $query = $this->getContentbyTermQuery($term_ids, $limit);
-      }
-      $data = $this->getJsonAPI($endpoint, $query);
-      $this->setContentCache($data, __FUNCTION__, func_get_args());
-      return $data;
     }
-  }
 
-  /**
-   * Get URL query for querying content by created date.
-   *
-   * @param int $limit
-   *   Max items to fetch.
-   * @param array $extra_arguments
-   *   Extra arguments to pass into query.
-   * @return array
-   *   JSONAPI URL query object array.
-   */
-  public function getContentbyRecency($limit = 1, $extra_arguments = []) {
-    if ($cache = $this->getContentCache(__FUNCTION__, func_get_args())) {
-      return $cache->data;
-    }
-    else {
-      $endpoint = $this->getResource();
-      $query = array_merge($this->getContentByRecencyQuery($limit), $extra_arguments);
-      $data = $this->getJsonAPI($endpoint, $query);
-      $this->setContentCache($data, __FUNCTION__, func_get_args());
-      return $data;
-    }
-  }
-
-  /**
-   * Get URL query for querying most recent content.
-   *
-   * @return array
-   *   JSONAPI URL query object array.
-   */
-  public function getContentByRecencyQuery($limit = 1) {
-    return [
-      'sort' => '-created',
-      'page[limit]' => $limit,
-      'include' => $this->getIncludes(),
-    ];
-  }
-
-  /**
-   * Get URL query for querying content by node nid.
-   *
-   * @param int $nid
-   *   Node nid.
-   *
-   * @return array
-   *   JSONAPI URL query object array.
-   */
-  public function getContentByNidQuery($nid) {
-    return [
-      "filter[drupal_internal__nid]" => $nid,
-      'include' => $this->getIncludes(),
-    ];
-  }
-
-  /**
-   * Given appropriate item id will fetch content.
-   *
-   * @param int $id
-   *   Node nid.
-   *
-   * @return bool|mixed
-   *   JSONAPI response.
-   */
-  public function getContentByNid($id) {
-
-    if ($cache = $this->getContentCache(__FUNCTION__, func_get_args())) {
-      return $cache->data;
-    }
-    else {
-      $endpoint = $this->getResource();
-      $query = $this->getContentByNidQuery($id);
-      $data = $this->getJsonApi($endpoint, $query);
-      $this->setContentCache($data, __FUNCTION__, func_get_args());
-      return $data;
-    }
+    return [];
   }
 
   /**
@@ -517,21 +297,6 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
     return \Drupal::cache()->set($cache_key, $data, $cache_timeout, []);
   }
 
-  /**
-   * This is a wrapper for ExternalContentJsonApi::getJsonApi.
-   *
-   * @param $endpoint
-   * @param $query
-   * @return bool|mixed
-   */
-  protected function getJsonAPI($endpoint, $query=[]) {
-    // Allow modules to alter headers.
-    $headers = [];
-    \Drupal::service('module_handler')->alter('external_content_headers', $headers, $this);
 
-    // Allow modules to alter the query.
-    \Drupal::service('module_handler')->alter('external_content_query', $query, $this);
-    return ExternalContentJsonApi::getJsonApi($endpoint, $query, $headers);
-  }
 
 }

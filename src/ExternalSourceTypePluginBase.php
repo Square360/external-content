@@ -6,6 +6,7 @@ namespace Drupal\external_content;
 
 use Drupal\Component\Plugin\PluginBase;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\external_content\ExternalContentJsonApi;
 
 /**
  * Base class for external_source_type plugins.
@@ -20,6 +21,36 @@ abstract class ExternalSourceTypePluginBase extends PluginBase implements Extern
   public function label(): string {
     // Cast the label to a string since it is a TranslatableMarkup object.
     return (string) $this->pluginDefinition['label'];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  abstract public function handleAutocomplete($source, string $input): array;
+
+  /**
+   * {@inheritdoc}
+   */
+  abstract public function getContent($source, $id, int $limit = 1);
+
+  /**
+   * Wrapper for altering request data before making JSON API calls.
+   *
+   * @param array &$query
+   *   Query parameters (passed by reference to allow alteration).
+   * @param array &$headers
+   *   Headers array (passed by reference to allow alteration).
+   * @param \Drupal\external_content\Entity\ExternalContentSource $source
+   *   The external content source entity.
+   * @param string $function
+   *   The name of the calling function (e.g., 'getContent', 'handleAutocomplete').
+   */
+  protected function alterRequest(array &$query = [], array &$headers = [], $source = NULL, string $function = '') {
+    // Allow modules to alter headers.
+    \Drupal::service('module_handler')->alter('external_content_headers', $headers, $source, $function);
+
+    // Allow modules to alter the query.
+    \Drupal::service('module_handler')->alter('external_content_query', $query, $source, $function);
   }
 
 }
