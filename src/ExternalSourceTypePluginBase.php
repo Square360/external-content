@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\external_content;
 
 use Drupal\Component\Plugin\PluginBase;
+use Drupal\Core\Link;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\external_content\ExternalContentJsonApi;
 
@@ -41,7 +42,7 @@ abstract class ExternalSourceTypePluginBase extends PluginBase implements Extern
   /**
    * {@inheritdoc}
    */
-  abstract public function getLinkToEntity($doc): \Drupal\Core\Link;
+  abstract public function getLinkToEntity(mixed $doc): Link;
 
   /**
    * Extracts the domain from a resource URL.

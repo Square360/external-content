@@ -36,25 +36,17 @@ trait JsonApiSourceTrait {
   /**
    * Build a Link object to an entity from JSON:API doc.
    */
-  protected function buildLinkToEntity(array $doc): Link {
+  public function getLinkToEntity(mixed $doc): Link {
     $title = $doc['attributes']['title'] ?? $doc['attributes']['name'] ?? 'Untitled';
     $url_string = ExternalContentJsonApi::getUrlFromEntity($doc);
-    if (!empty($url_string)) {
-      $url = Url::fromUri($url_string, [
-        'attributes' => [
-          'target' => '_blank',
-          'rel' => 'noopener',
-        ],
-      ]);
-      return Link::fromTextAndUrl($title, $url);
-    }
-    return Link::createFromRoute($title, '<none>');
+    $url = Url::fromUri($url_string);
+    return Link::fromTextAndUrl($title, $url);
   }
 
   /**
    * Get includes from plugin configuration.
    */
-  protected function getIncludes($source): string {
+  public function getIncludes($source): string {
     $plugin_config = $source->getPluginConfiguration();
     return $plugin_config['includes'] ?? '';
   }

@@ -40,6 +40,7 @@ class ExternalContentTemplateFormatter extends ExternalContentFormatterBase {
         $render_children[] = [
           '#theme' => 'external_content',
           '#doc' => $entity,
+          '#link' => $sourcePlugin->getLinkToEntity($entity),
           '#response' => $originalData,
           '#source_id' => $source_id,
           '#source' => $source,

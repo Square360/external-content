@@ -83,13 +83,6 @@ final class JsonApiTitle extends ExternalSourceTypePluginBase {
   /**
    * {@inheritdoc}
    */
-  public function getLinkToEntity($doc): Link {
-    return $this->buildLinkToEntity($doc);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getLookupResource($source): string {
     return $source->getResource();
   }

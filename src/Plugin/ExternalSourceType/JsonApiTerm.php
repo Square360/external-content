@@ -87,13 +87,6 @@ final class JsonApiTerm extends ExternalSourceTypePluginBase {
   /**
    * {@inheritdoc}
    */
-  public function getLinkToEntity($doc): Link {
-    return $this->buildLinkToEntity($doc);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getLookupResource($source): string {
     $plugin_config = $source->getPluginConfiguration();
     $term_resource = $plugin_config['term_resource'] ?? '';

@@ -16,6 +16,7 @@ function external_content_theme($existing, $type, $theme, $path) {
     'external_content' => [
       'variables' => [
         'doc' => NULL,
+        'link' => NULL,
         'response' => NULL,
         'source_id' => NULL,
         'source' => NULL,
@@ -52,16 +53,6 @@ function template_preprocess_external_content(&$variables) {
   $variables['attributes']['class'] = [
     'external-content',
     'external-content--' . $source->id(),
+    'external-content--' . $plugin_id,
   ];
-
-  // Only apply JsonApi-specific processing for jsonapi plugin types
-  if (in_array($plugin_id, ['jsonapi', 'jsonapi_json'])) {
-    $site_url = ExternalContentJsonApi::getSiteFromUrl($source->getResource());
-    $variables['external_url'] = ExternalContentJsonApi::getUrlFromEntity($variables['doc']);
-    $variables['external_link'] = ExternalContentJsonApi::getLinkFromEntity($variables['doc']);
-    $variables['external_site'] = $site_url;
-    $variables['external_type'] = $variables["doc"]["type"];
-
-    $variables['attributes']['class'][] = 'external-content--' . $variables["doc"]["type"];
-  }
 }

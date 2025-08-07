@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\external_content;
 
+use Drupal\Core\Link;
+
 /**
  * Interface for external_source_type plugins.
  */
@@ -75,6 +77,6 @@ interface ExternalSourceTypeInterface {
    * @return \Drupal\Core\Link
    *   Drupal Link object to the external entity.
    */
-  public function getLinkToEntity($doc): \Drupal\Core\Link;
+  public function getLinkToEntity(mixed $doc): Link;
 
 }
