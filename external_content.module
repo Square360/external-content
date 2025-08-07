@@ -35,8 +35,8 @@ function external_content_theme_suggestions_external_content(array $variables) {
   $source = $variables['source'];
   $suggestions = [
     'external_content',
-    'external_content__' . $source->getId(), // external_content__insights
-    'external_content__' . $source->getType(),  // external_content__jsonapi_by_name external_content__localist
+    'external_content__' . $source->getId(),
+    'external_content__' . $source->getType(),
   ];
   return $suggestions;
 }
@@ -47,16 +47,21 @@ function external_content_theme_suggestions_external_content(array $variables) {
 function template_preprocess_external_content(&$variables) {
   /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
   $source = $variables['source'];
-  $site_url = ExternalContentJsonApi::getSiteFromUrl($source->getResource());
-  $variables['external_url'] = ExternalContentJsonApi::getUrlFromEntity($variables['doc']);
-  $variables['external_link'] = ExternalContentJsonApi::getLinkFromEntity($variables['doc']);
-  $variables['external_site'] = $site_url;
-  $variables['external_type'] = $variables["doc"]["type"];
+  $plugin_id = $source->getType();
 
   $variables['attributes']['class'] = [
     'external-content',
-    'external-content--' . $source->getId(),
-    'external-content--' . $variables["doc"]["type"],
+    'external-content--' . $source->id(),
   ];
 
+  // Only apply JsonApi-specific processing for jsonapi plugin types
+  if (in_array($plugin_id, ['jsonapi', 'jsonapi_json'])) {
+    $site_url = ExternalContentJsonApi::getSiteFromUrl($source->getResource());
+    $variables['external_url'] = ExternalContentJsonApi::getUrlFromEntity($variables['doc']);
+    $variables['external_link'] = ExternalContentJsonApi::getLinkFromEntity($variables['doc']);
+    $variables['external_site'] = $site_url;
+    $variables['external_type'] = $variables["doc"]["type"];
+
+    $variables['attributes']['class'][] = 'external-content--' . $variables["doc"]["type"];
+  }
 }
