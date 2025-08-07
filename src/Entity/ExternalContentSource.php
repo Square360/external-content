@@ -169,6 +169,33 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
   }
 
   /**
+   * Returns the plugin instance for this external source.
+   *
+   * @return \Drupal\external_content\ExternalSourceTypeInterface
+   *   The plugin instance.
+   *
+   * @throws \Exception
+   *   If the plugin cannot be created.
+   */
+  public function getPlugin() {
+    $plugin_type = $this->getType();
+    if (!$plugin_type) {
+      throw new \Exception('No plugin type configured for external content source: ' . $this->id);
+    }
+
+    try {
+      $plugin_manager = \Drupal::service('plugin.manager.external_source_type');
+      return $plugin_manager->createInstance($plugin_type);
+    } catch (\Exception $e) {
+      \Drupal::logger('external_content')->error('Error creating plugin for source @source_id: @error', [
+        '@source_id' => $this->id,
+        '@error' => $e->getMessage(),
+      ]);
+      throw $e;
+    }
+  }
+
+  /**
    * Returns resource.
    *
    * @return string
@@ -196,24 +223,18 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
       return $cache->data;
     }
 
-    $plugin_type = $this->getType();
-    if ($plugin_type) {
-      try {
-        $plugin_manager = \Drupal::service('plugin.manager.external_source_type');
-        $plugin = $plugin_manager->createInstance($plugin_type);
-        $data = $plugin->getContent($this, $id, $limit);
-        $this->setContentCache($data, __FUNCTION__, func_get_args());
-        return $data;
-      } catch (\Exception $e) {
-        \Drupal::logger('external_content')->error('Error getting content for source @source_id: @error', [
-          '@source_id' => $this->id,
-          '@error' => $e->getMessage(),
-        ]);
-        return FALSE;
-      }
+    try {
+      $plugin = $this->getPlugin();
+      $data = $plugin->getContent($this, $id, $limit);
+      $this->setContentCache($data, __FUNCTION__, func_get_args());
+      return $data;
+    } catch (\Exception $e) {
+      \Drupal::logger('external_content')->error('Error getting content for source @source_id: @error', [
+        '@source_id' => $this->id,
+        '@error' => $e->getMessage(),
+      ]);
+      return FALSE;
     }
-
-    return FALSE;
   }
 
 
@@ -228,21 +249,16 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
    *   URL Query object array.
    */
   public function getLookupQuery($input): array {
-    $plugin_type = $this->getType();
-    if ($plugin_type) {
-      try {
-        $plugin_manager = \Drupal::service('plugin.manager.external_source_type');
-        $plugin = $plugin_manager->createInstance($plugin_type);
-        return $plugin->getLookupQuery($this, $input);
-      } catch (\Exception $e) {
-        \Drupal::logger('external_content')->error('Error getting lookup query for source @source_id: @error', [
-          '@source_id' => $this->id,
-          '@error' => $e->getMessage(),
-        ]);
-      }
+    try {
+      $plugin = $this->getPlugin();
+      return $plugin->getLookupQuery($this, $input);
+    } catch (\Exception $e) {
+      \Drupal::logger('external_content')->error('Error getting lookup query for source @source_id: @error', [
+        '@source_id' => $this->id,
+        '@error' => $e->getMessage(),
+      ]);
+      return [];
     }
-
-    return [];
   }
 
   /**

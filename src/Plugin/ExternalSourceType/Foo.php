@@ -41,6 +41,15 @@ final class Foo extends ExternalSourceTypePluginBase {
   /**
    * {@inheritdoc}
    */
+  public function parseContent($originalData): array {
+    // Dummy implementation - returns empty array
+    // In a real implementation, this would parse the response data structure
+    return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function externalSourceConfigForm(array &$form_container, array &$plugin_configuration) {
     // This method can be used to add configuration options for the Foo source type.
     $form_container['foo_setting'] = [

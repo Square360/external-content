@@ -26,19 +26,21 @@ class ExternalContentTemplateFormatter extends ExternalContentFormatterBase {
     foreach ($items as $delta => $item) {
       $source_id = $item->source;
       $id = $item->target_id;
-
       $storage = $this->entityTypeManager->getStorage('external_content_source');
       /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
       $source = $storage->load($source_id);
 
-      $data = $source->getContent($id, $this->getSetting('limit'));
+      $originalData = $source->getContent($id, $this->getSetting('limit'));
+
+      $sourcePlugin = $source->getPlugin();
+      $parsedData = $sourcePlugin->parseContent($originalData);
 
       $render_children = [];
-      foreach ($data['data'] as $entity) {
+      foreach ($parsedData as $entity) {
         $render_children[] = [
           '#theme' => 'external_content',
           '#doc' => $entity,
-          '#jsonapi' => $data,
+          '#jsonapi' => $originalData,
           '#source_id' => $source_id,
           '#source' => $source,
         ];

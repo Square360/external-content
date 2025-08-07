@@ -96,6 +96,13 @@ final class JsonApiTerm extends ExternalSourceTypePluginBase {
   /**
    * {@inheritdoc}
    */
+  public function parseContent($originalData): array {
+    return $originalData['data'] ?? [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getLookupResource($source): string {
     $plugin_config = $source->getPluginConfiguration();
     $term_resource = $plugin_config['term_resource'] ?? '';

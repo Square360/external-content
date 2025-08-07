@@ -34,6 +34,11 @@ abstract class ExternalSourceTypePluginBase extends PluginBase implements Extern
   abstract public function getContent($source, $id, int $limit = 1);
 
   /**
+   * {@inheritdoc}
+   */
+  abstract public function parseContent($originalData): array;
+
+  /**
    * Wrapper for altering request data before making JSON API calls.
    *
    * @param array &$query

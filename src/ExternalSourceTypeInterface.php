@@ -55,4 +55,15 @@ interface ExternalSourceTypeInterface {
    */
   public function getContent($source, $id, int $limit = 1);
 
+  /**
+   * Parses content from the external source response.
+   *
+   * @param mixed $originalData
+   *   The raw response data from the external source.
+   *
+   * @return array
+   *   Array of parsed content items.
+   */
+  public function parseContent($originalData): array;
+
 }

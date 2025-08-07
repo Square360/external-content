@@ -90,6 +90,13 @@ final class JsonApiTitle extends ExternalSourceTypePluginBase {
   /**
    * {@inheritdoc}
    */
+  public function parseContent($originalData): array {
+    return $originalData['data'] ?? [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getLookupResource($source): string {
     return $source->getResource();
   }
