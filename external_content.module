@@ -16,7 +16,7 @@ function external_content_theme($existing, $type, $theme, $path) {
     'external_content' => [
       'variables' => [
         'doc' => NULL,
-        'jsonapi' => NULL,
+        'response' => NULL,
         'source_id' => NULL,
         'source' => NULL,
       ],

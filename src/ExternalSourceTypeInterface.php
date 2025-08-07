@@ -66,4 +66,15 @@ interface ExternalSourceTypeInterface {
    */
   public function parseContent($originalData): array;
 
+  /**
+   * Gets a link to an external entity.
+   *
+   * @param mixed $doc
+   *   The document/entity data.
+   *
+   * @return \Drupal\Core\Link
+   *   Drupal Link object to the external entity.
+   */
+  public function getLinkToEntity($doc): \Drupal\Core\Link;
+
 }

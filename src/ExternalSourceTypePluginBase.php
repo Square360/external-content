@@ -39,6 +39,36 @@ abstract class ExternalSourceTypePluginBase extends PluginBase implements Extern
   abstract public function parseContent($originalData): array;
 
   /**
+   * {@inheritdoc}
+   */
+  abstract public function getLinkToEntity($doc): \Drupal\Core\Link;
+
+  /**
+   * Extracts the domain from a resource URL.
+   *
+   * @param \Drupal\external_content\Entity\ExternalContentSource $source
+   *   The external content source entity.
+   *
+   * @return string
+   *   The domain extracted from the resource URL.
+   */
+  protected function getDomain($source): string {
+    $resource_url = $source->getResource();
+    $parsed_url = parse_url($resource_url);
+
+    if (isset($parsed_url['host'])) {
+      $domain = $parsed_url['host'];
+      // Remove 'www.' if present
+      if (strpos($domain, 'www.') === 0) {
+        $domain = substr($domain, 4);
+      }
+      return $domain;
+    }
+
+    return '';
+  }
+
+  /**
    * Wrapper for altering request data before making JSON API calls.
    *
    * @param array &$query

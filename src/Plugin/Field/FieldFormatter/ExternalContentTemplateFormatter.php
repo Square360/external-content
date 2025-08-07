@@ -40,7 +40,7 @@ class ExternalContentTemplateFormatter extends ExternalContentFormatterBase {
         $render_children[] = [
           '#theme' => 'external_content',
           '#doc' => $entity,
-          '#jsonapi' => $originalData,
+          '#response' => $originalData,
           '#source_id' => $source_id,
           '#source' => $source,
         ];

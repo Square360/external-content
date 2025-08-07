@@ -8,6 +8,8 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\external_content\Attribute\ExternalSourceType;
 use Drupal\external_content\ExternalSourceTypePluginBase;
 use Drupal\external_content\ExternalContentJsonApi;
+use Drupal\Core\Link;
+use Drupal\Core\Url;
 
 /**
  * Plugin implementation of the external_source_type.
@@ -18,6 +20,7 @@ use Drupal\external_content\ExternalContentJsonApi;
   description: new TranslatableMarkup('Selects JSONAPI entities by taxonomy term.'),
 )]
 final class JsonApiTerm extends ExternalSourceTypePluginBase {
+  use JsonApiSourceTrait;
 
   function externalSourceConfigForm(array &$form_container, array &$plugin_configuration): array {
 
@@ -60,30 +63,11 @@ final class JsonApiTerm extends ExternalSourceTypePluginBase {
    * {@inheritdoc}
    */
   public function handleAutocomplete($source, string $input): array {
-    $results = [];
-
     $endpoint = $this->getLookupResource($source);
     $query = $this->getLookupQuery($source, $input);
     $headers = [];
-    $this->alterRequest($query, $headers, $source, 'handleAutocomplete');
-    $json = ExternalContentJsonApi::getJsonApi($endpoint, $query, $headers)['data'] ?? [];
-
-    if ($json !== FALSE && !empty($json)) {
-      foreach ($json as $result) {
-        $drupal_id = !empty($result['attributes']['drupal_internal__nid'])
-          ? $result['attributes']['drupal_internal__nid']
-          : $result['attributes']['drupal_internal__tid'];
-        $title = !empty($result['attributes']['title'])
-          ? $result['attributes']['title']
-          : $result['attributes']['name'];
-        $results[] = [
-          'value' => "$title ($drupal_id)",
-          'label' => "$title ($drupal_id)",
-        ];
-      }
-    }
-
-    return $results;
+    $json = $this->getJsonApiResponse($endpoint, $query, $headers, $source, 'handleAutocomplete')['data'] ?? [];
+    return $this->buildAutocompleteResults($json);
   }
 
   /**
@@ -98,6 +82,13 @@ final class JsonApiTerm extends ExternalSourceTypePluginBase {
    */
   public function parseContent($originalData): array {
     return $originalData['data'] ?? [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getLinkToEntity($doc): Link {
+    return $this->buildLinkToEntity($doc);
   }
 
   /**
@@ -176,12 +167,5 @@ final class JsonApiTerm extends ExternalSourceTypePluginBase {
     return $query;
   }
 
-  /**
-   * Get includes from plugin configuration.
-   */
-  protected function getIncludes($source): string {
-    $plugin_config = $source->getPluginConfiguration();
-    return $plugin_config['includes'] ?? '';
-  }
 
 }

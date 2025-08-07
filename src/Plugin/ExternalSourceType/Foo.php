@@ -7,6 +7,7 @@ namespace Drupal\external_content\Plugin\ExternalSourceType;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\external_content\Attribute\ExternalSourceType;
 use Drupal\external_content\ExternalSourceTypePluginBase;
+use Drupal\Core\Link;
 
 /**
  * Plugin implementation of the external_source_type.
@@ -45,6 +46,15 @@ final class Foo extends ExternalSourceTypePluginBase {
     // Dummy implementation - returns empty array
     // In a real implementation, this would parse the response data structure
     return [];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getLinkToEntity($doc): Link {
+    // Dummy implementation - extract title from doc and return as Link without URL
+    $title = $doc['title'] ?? $doc['name'] ?? 'Untitled';
+    return Link::createFromRoute($title, '<none>');
   }
 
   /**
