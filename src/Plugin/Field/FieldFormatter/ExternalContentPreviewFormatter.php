@@ -35,11 +35,11 @@ class ExternalContentPreviewFormatter extends ExternalContentFormatterBase {
       $plugin = $source->getPlugin();
       $label = $source->getLabel();
       $data = $source->getContent($id, $this->getSetting('limit'));
+      $parsedData = $plugin->parseContent($data);
 
-      // ToDo: make this a link again when we have a standard createLinkFromEntity method on the plugin..
       $links = array_map(function ($item) use ($plugin) {
         return $plugin->getLinkToEntity($item);
-      }, $data['data']);
+      }, $parsedData);
 
       $element[$delta] = [
         [

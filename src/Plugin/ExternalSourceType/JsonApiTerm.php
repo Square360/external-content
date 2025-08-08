@@ -107,7 +107,7 @@ final class JsonApiTerm extends ExternalSourceTypePluginBase {
   /**
    * Get content by taxonomy term.
    */
-  protected function getContentByTerm($source, array $term_ids, $limit = 1) {
+  public function getContentByTerm($source, array $term_ids, $limit = 1) {
     $endpoint = $source->getResource();
     if (count($term_ids) > 1) {
       $query = $this->getContentByMultiTermQuery($source, $term_ids, $limit);
@@ -123,7 +123,7 @@ final class JsonApiTerm extends ExternalSourceTypePluginBase {
   /**
    * Get URL query for querying content by taxonomy term.
    */
-  protected function getContentByTermQuery($source, array $term_ids, $limit = 1) {
+  public function getContentByTermQuery($source, array $term_ids, $limit = 1) {
     $plugin_config = $source->getPluginConfiguration();
     $term_field = $plugin_config['term_field'] ?? '';
     $term_value = implode(',', $term_ids);
@@ -138,7 +138,7 @@ final class JsonApiTerm extends ExternalSourceTypePluginBase {
   /**
    * Get URL query for querying content by multiple taxonomy terms.
    */
-  protected function getContentByMultiTermQuery($source, array $term_ids, $limit = 1) {
+  public function getContentByMultiTermQuery($source, array $term_ids, $limit = 1) {
     $plugin_config = $source->getPluginConfiguration();
     $term_field = $plugin_config['term_field'] ?? '';
 
