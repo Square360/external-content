@@ -126,8 +126,6 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
     return $this->label;
   }
 
-
-
   /**
    * Returns string of JSONAPI includes.
    *
@@ -205,8 +203,6 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
     return $this->resource;
   }
 
-
-
   /**
    * Given appropriate item id & max items will fetch content.
    *
@@ -236,8 +232,6 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
       return FALSE;
     }
   }
-
-
 
   /**
    * Given input string returns query for entity lookup.
