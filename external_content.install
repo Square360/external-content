@@ -78,15 +78,14 @@ function external_content_update_9002() {
     ->loadByProperties(['type' => 'external_content_item']);
 
   foreach ($field_storage_configs as $field_storage) {
-    $table_name = $entity_type_manager->getStorage($field_storage->getTargetEntityTypeId())
-      ->getTableMapping()
-      ->getFieldTableName($field_storage->getName());
-
-    $revision_table_name = $entity_type_manager->getStorage($field_storage->getTargetEntityTypeId())
-      ->getTableMapping()
-      ->getFieldRevisionTableName($field_storage->getName());
-
+    $entity_type_id = $field_storage->getTargetEntityTypeId();
     $field_name = $field_storage->getName();
+
+    // Get table mapping for the entity type
+    $storage = $entity_type_manager->getStorage($entity_type_id);
+    $table_mapping = $storage->getTableMapping();
+
+    $table_name = $table_mapping->getFieldTableName($field_name);
     $uuid_column = $field_name . '_uuid';
 
     // Drop the UUID column from the main field table if it exists.
@@ -96,11 +95,18 @@ function external_content_update_9002() {
       \Drupal::logger('external_content')->info('Dropped UUID column from table @table', ['@table' => $table_name]);
     }
 
-    // Drop the UUID column from the revision table if it exists.
-    if ($database->schema()->tableExists($revision_table_name) &&
-        $database->schema()->fieldExists($revision_table_name, $uuid_column)) {
-      $database->schema()->dropField($revision_table_name, $uuid_column);
-      \Drupal::logger('external_content')->info('Dropped UUID column from revision table @table', ['@table' => $revision_table_name]);
+    // Handle revision tables if the entity type supports revisions
+    $entity_type = $entity_type_manager->getDefinition($entity_type_id);
+    if ($entity_type->isRevisionable()) {
+      // For revisionable entities, get the revision table name
+      $revision_table_name = $table_mapping->getDedicatedRevisionTableName($field_storage);
+
+      // Drop the UUID column from the revision table if it exists.
+      if ($database->schema()->tableExists($revision_table_name) &&
+          $database->schema()->fieldExists($revision_table_name, $uuid_column)) {
+        $database->schema()->dropField($revision_table_name, $uuid_column);
+        \Drupal::logger('external_content')->info('Dropped UUID column from revision table @table', ['@table' => $revision_table_name]);
+      }
     }
   }
 
@@ -128,10 +134,10 @@ function external_content_update_9003() {
     $field_name = $field_storage->getName();
 
     // Get table mapping for the entity type
-    $table_mapping = $entity_type_manager->getStorage($entity_type_id)->getTableMapping();
+    $storage = $entity_type_manager->getStorage($entity_type_id);
+    $table_mapping = $storage->getTableMapping();
 
     $table_name = $table_mapping->getFieldTableName($field_name);
-    $revision_table_name = $table_mapping->getFieldRevisionTableName($field_name);
 
     $target_id_column = $field_name . '_target_id';
     $title_column = $field_name . '_title';
@@ -164,32 +170,39 @@ function external_content_update_9003() {
       \Drupal::logger('external_content')->info('Converted title column to TEXT in table @table', ['@table' => $table_name]);
     }
 
-    // Convert target_id column from VARCHAR to TEXT in revision table
-    if ($database->schema()->tableExists($revision_table_name) &&
-        $database->schema()->fieldExists($revision_table_name, $target_id_column)) {
+    // Handle revision tables if the entity type supports revisions
+    $entity_type = $entity_type_manager->getDefinition($entity_type_id);
+    if ($entity_type->isRevisionable()) {
+      // For revisionable entities, get the revision table name
+      $revision_table_name = $table_mapping->getDedicatedRevisionTableName($field_storage);
 
-      $database->schema()->changeField($revision_table_name, $target_id_column, $target_id_column, [
-        'type' => 'text',
-        'size' => 'normal',
-        'not null' => FALSE,
-        'description' => 'ID of selected target',
-      ]);
+      // Convert target_id column from VARCHAR to TEXT in revision table
+      if ($database->schema()->tableExists($revision_table_name) &&
+          $database->schema()->fieldExists($revision_table_name, $target_id_column)) {
 
-      \Drupal::logger('external_content')->info('Converted target_id column to TEXT in revision table @table', ['@table' => $revision_table_name]);
-    }
+        $database->schema()->changeField($revision_table_name, $target_id_column, $target_id_column, [
+          'type' => 'text',
+          'size' => 'normal',
+          'not null' => FALSE,
+          'description' => 'ID of selected target',
+        ]);
 
-    // Convert title column from VARCHAR to TEXT in revision table
-    if ($database->schema()->tableExists($revision_table_name) &&
-        $database->schema()->fieldExists($revision_table_name, $title_column)) {
+        \Drupal::logger('external_content')->info('Converted target_id column to TEXT in revision table @table', ['@table' => $revision_table_name]);
+      }
 
-      $database->schema()->changeField($revision_table_name, $title_column, $title_column, [
-        'type' => 'text',
-        'size' => 'normal',
-        'not null' => FALSE,
-        'description' => 'Label of target item.',
-      ]);
+      // Convert title column from VARCHAR to TEXT in revision table
+      if ($database->schema()->tableExists($revision_table_name) &&
+          $database->schema()->fieldExists($revision_table_name, $title_column)) {
 
-      \Drupal::logger('external_content')->info('Converted title column to TEXT in revision table @table', ['@table' => $revision_table_name]);
+        $database->schema()->changeField($revision_table_name, $title_column, $title_column, [
+          'type' => 'text',
+          'size' => 'normal',
+          'not null' => FALSE,
+          'description' => 'Label of target item.',
+        ]);
+
+        \Drupal::logger('external_content')->info('Converted title column to TEXT in revision table @table', ['@table' => $revision_table_name]);
+      }
     }
   }
 

@@ -74,7 +74,11 @@ final class JsonApiTerm extends ExternalSourceTypePluginBase {
    * {@inheritdoc}
    */
   public function getContent($source, $id, int $limit = 1) {
-    return $this->getContentByTerm($source, [$id], $limit);
+    // Convert single ID to array for consistency
+    if (!is_array($id)) {
+      $id = [$id];
+    }
+    return $this->getContentByTerm($source, $id, $limit);
   }
 
   /**

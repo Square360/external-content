@@ -65,8 +65,18 @@ final class JsonApiTitle extends ExternalSourceTypePluginBase {
    * {@inheritdoc}
    */
   public function getContent($source, $id, int $limit = 1) {
-    if ($id && $id !== "-1") {
-      return $this->getContentByNid($source, $id);
+    // Convert single ID to array for consistency
+    if (!is_array($id)) {
+      $id = [$id];
+    }
+
+    if ($id && $id[0] !== "-1") {
+      if (count($id) > 1) {
+        return $this->getContentByMultipleNids($source, $id);
+      }
+      else {
+        return $this->getContentByNid($source, $id[0]);
+      }
     }
     else {
       return $this->getContentByRecency($source, $limit);
@@ -122,6 +132,26 @@ final class JsonApiTitle extends ExternalSourceTypePluginBase {
       'page[limit]' => $limit,
       'include' => $this->getIncludes($source),
     ], $extra_arguments);
+    $headers = [];
+    $this->alterRequest($query, $headers, $source, 'getContent');
+    return ExternalContentJsonApi::getJsonApi($endpoint, $query, $headers);
+  }
+
+  /**
+   * Get content by multiple node IDs.
+   */
+  protected function getContentByMultipleNids($source, array $ids) {
+    $endpoint = $source->getResource();
+    $query = [
+      'filter[drupal_internal__nid][operator]' => 'IN',
+      'include' => $this->getIncludes($source),
+    ];
+
+    // Add each ID as a separate value parameter
+    foreach ($ids as $index => $nid) {
+      $query["filter[drupal_internal__nid][value][$index]"] = $nid;
+    }
+
     $headers = [];
     $this->alterRequest($query, $headers, $source, 'getContent');
     return ExternalContentJsonApi::getJsonApi($endpoint, $query, $headers);

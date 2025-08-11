@@ -60,15 +60,15 @@ interface ExternalContentSourceInterface extends ConfigEntityInterface {
   /**
    * Gets content from the external source via the configured plugin.
    *
-   * @param int $id
-   *   Entity id (nid, tid, or -1 for most recent).
+   * @param string $ids
+   *   Comma separated list of ids.
    * @param int $limit
    *   Max number of items to return.
    *
    * @return bool|mixed
    *   External content data.
    */
-  public function getContent($id, $limit = 1);
+  public function getContent($ids, $limit = 1);
 
   /**
    * Gets lookup query via the configured plugin.

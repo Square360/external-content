@@ -47,8 +47,8 @@ interface ExternalSourceTypeInterface {
    *
    * @param \Drupal\external_content\Entity\ExternalContentSource $source
    *   The external content source entity.
-   * @param int $id
-   *   Entity id (nid, tid, or -1 for most recent).
+   * @param string|array $id
+   *   Entity id(s) (nid, tid, or -1 for most recent). Can be a single ID or array of IDs.
    * @param int $limit
    *   Max number of items to return.
    *

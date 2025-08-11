@@ -107,13 +107,24 @@ class ExternalContentWidget extends WidgetBase {
       [static::class, 'validate'],
     ];
 
-    // Build a "label (target_id)' value that can be parsed for storage.
+    // Pass the widget setting to the element for validation
+    $element['#allow_multiple_values'] = $this->getSetting('allow_multiple_values');
+
+    // Build the "label (target_id)' values
     if (!empty($items[$delta]->target_id)) {
-      $default_value = sprintf(
-        '%s (%d)',
-        $items[$delta]->title,
-        $items[$delta]->target_id
-      );
+      // Handle multiple values stored as comma-separated strings
+      // Always show all values regardless of allow_multiple_values setting
+      $target_ids = array_map('trim', explode(',', $items[$delta]->target_id));
+      $titles = array_map('trim', explode(',', $items[$delta]->title));
+
+      $formatted_values = [];
+      foreach ($target_ids as $index => $target_id) {
+        if (isset($titles[$index])) {
+          $formatted_values[] = sprintf('%s (%s)', $titles[$index], $target_id);
+        }
+      }
+
+      $default_value = implode(', ', $formatted_values);
     }
 
     $source_options = $this->getSourceOptions();
@@ -139,7 +150,9 @@ class ExternalContentWidget extends WidgetBase {
     $default_source = $items[$delta]->source ?? array_key_first($source_options);
 
     $element['search'] = [
-      '#description' => $this->t("Select item from external content. For standard sources you can also select 'Most recent item(s)' instead of searching by title."),
+      '#description' => $this->getSetting('allow_multiple_values')
+        ? $this->t("Select item from external content. For multiple values, you can separate with commas.")
+        : $this->t("Select a single item from external content. Multiple values will be ignored"),
       '#type' => 'textfield',
       '#prefix' => '<div id="' . $ajax_wrapper_id . '">',
       '#suffix' => '</div>',
@@ -194,16 +207,37 @@ class ExternalContentWidget extends WidgetBase {
    */
   public function massageFormValues(array $values, array $form, FormStateInterface $form_state) {
     $item = NULL;
+    $allow_multiple = $this->getSetting('allow_multiple_values');
 
     foreach ($values as $delta => &$item) {
       $item['delta'] = $delta;
 
-      // Take "label (entity id)', match the ID from inside the parentheses.
-      // @see \Drupal\Core\Entity\Element\EntityAutocomplete::extractEntityIdFromAutocompleteInput
-      if (preg_match('/(.+\\s)\\(([^\\)]+)\\)/', $item['search'], $matches)) {
-        $item['title'] = trim($matches[1]);
-        $item['target_id'] = trim($matches[2]);
-        $item['uuid'] = trim($matches[2]);
+      if ($allow_multiple && !empty($item['search'])) {
+        // Handle multiple values separated by commas
+        $search_values = array_map('trim', explode(',', $item['search']));
+
+        $titles = [];
+        $target_ids = [];
+
+        foreach ($search_values as $search_value) {
+          if (preg_match('/(.+\\s)\\(([^\\)]+)\\)/', $search_value, $matches)) {
+            $titles[] = trim($matches[1]);
+            $target_ids[] = trim($matches[2]);
+          }
+        }
+
+        // Store as comma-separated strings
+        $item['title'] = implode(', ', $titles);
+        $item['target_id'] = implode(', ', $target_ids);
+      }
+      else {
+        // Single value processing (original logic)
+        // Take "label (entity id)', match the ID from inside the parentheses.
+        // @see \Drupal\Core\Entity\Element\EntityAutocomplete::extractEntityIdFromAutocompleteInput
+        if (preg_match('/(.+\\s)\\(([^\\)]+)\\)/', $item['search'], $matches)) {
+          $item['title'] = trim($matches[1]);
+          $item['target_id'] = trim($matches[2]);
+        }
       }
     }
 
@@ -214,7 +248,6 @@ class ExternalContentWidget extends WidgetBase {
    * {@inheritdoc}
    */
   public static function validate($element, FormStateInterface $form_state) {
-
     $field_name = $element['#parents'][0];
     if ($element["#parents"][0] == 'default_value_input') {
       return;
@@ -225,12 +258,81 @@ class ExternalContentWidget extends WidgetBase {
       return;
     }
 
-    $id = EntityAutocomplete::extractEntityIdFromAutocompleteInput($value[0]["search"]);
-    if (empty($id)) {
-      $form_state->setValueForElement($element, '');
-      return;
+    // Get the widget setting from the element
+    $allow_multiple = $element['#allow_multiple_values'] ?? FALSE;
+
+    $search_input = $value[0]["search"];
+
+    if ($allow_multiple) {
+      // Validate multiple comma-separated values
+      $search_values = array_map('trim', explode(',', $search_input));
+      $invalid_values = [];
+
+      foreach ($search_values as $search_value) {
+        if (!empty($search_value)) {
+          $id = EntityAutocomplete::extractEntityIdFromAutocompleteInput($search_value);
+          if (empty($id)) {
+            $invalid_values[] = $search_value;
+          }
+        }
+      }
+
+      if (!empty($invalid_values)) {
+        $form_state->setError($element['search'], t('The following values are not in the correct format: @values. Use the format "label (id)" for each value.', [
+          '@values' => implode(', ', $invalid_values)
+        ]));
+        return;
+      }
+    }
+    else {
+      // Single value validation (original logic)
+      $id = EntityAutocomplete::extractEntityIdFromAutocompleteInput($search_input);
+      if (empty($id)) {
+        $form_state->setError($element['search'], t('The value is not in the correct format. Use the format "label (id)".'));
+        return;
+      }
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function defaultSettings() {
+    return [
+      'allow_multiple_values' => FALSE,
+    ] + parent::defaultSettings();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function settingsForm(array $form, FormStateInterface $form_state) {
+    $elements = parent::settingsForm($form, $form_state);
+
+    $elements['allow_multiple_values'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Allow multiple values'),
+      '#default_value' => $this->getSetting('allow_multiple_values'),
+      '#description' => $this->t('When enabled, the widget will accept multiple values separated by commas in the format: "label (id), label (id), ..."'),
+    ];
+
+    return $elements;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function settingsSummary() {
+    $summary = parent::settingsSummary();
+
+    if ($this->getSetting('allow_multiple_values')) {
+      $summary[] = $this->t('Multiple values allowed');
+    }
+    else {
+      $summary[] = $this->t('Single value only');
     }
 
+    return $summary;
   }
 
 }

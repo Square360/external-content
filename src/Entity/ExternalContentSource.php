@@ -206,22 +206,24 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
   /**
    * Given appropriate item id & max items will fetch content.
    *
-   * @param int $id
-   *   Entity id (nid or tid depending on source).
+   * @param string $ids
+   *   Comma separated entity ids.
    * @param int $limit
    *   Max number of items to return.
    *
    * @return bool|mixed
    *   External content data.
    */
-  public function getContent($id, $limit = 1) {
+  public function getContent($ids, $limit = 1) {
     if ($cache = $this->getContentCache(__FUNCTION__, func_get_args())) {
       return $cache->data;
     }
 
+    $id_list = explode(',', $ids);
+
     try {
       $plugin = $this->getPlugin();
-      $data = $plugin->getContent($this, $id, $limit);
+      $data = $plugin->getContent($this, $id_list, $limit);
       $this->setContentCache($data, __FUNCTION__, func_get_args());
       return $data;
     } catch (\Exception $e) {
