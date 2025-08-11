@@ -90,10 +90,10 @@ class ExternalContentItem extends FieldItemBase {
     $constraints = parent::getConstraints();
     $constraint_manager = \Drupal::typedDataManager()->getValidationConstraintManager();
 
-    $options['target_id']['Length']['max'] = 32;
-    $options['title']['Length']['max'] = 255;
+    // No length constraints needed for TEXT fields
+    // Removed target_id and title length constraints since they are now TEXT fields
 
-    $constraints[] = $constraint_manager->create('ComplexData', $options);
+    $constraints[] = $constraint_manager->create('ComplexData', []);
     return $constraints;
   }
 
@@ -104,8 +104,8 @@ class ExternalContentItem extends FieldItemBase {
 
     $columns = [
       'target_id' => [
-        'type' => 'varchar',
-        'length' => 255,
+        'type' => 'text',
+        'size' => 'normal',
         'not null' => FALSE,
         'description' => 'ID of selected target',
       ],
@@ -116,8 +116,8 @@ class ExternalContentItem extends FieldItemBase {
         'description' => 'Source of selection.',
       ],
       'title' => [
-        'type' => 'varchar',
-        'length' => 255,
+        'type' => 'text',
+        'size' => 'normal',
         'not null' => FALSE,
         'description' => 'Label of target item.',
       ],
