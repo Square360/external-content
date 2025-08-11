@@ -63,3 +63,49 @@ function external_content_update_9001() {
 
   return t('Migrated term_resource, term_field, and includes fields to plugin_configuration and set appropriate plugin types for all external content sources.');
 }
+
+/**
+ * Remove deprecated UUID field from external_content_item field type.
+ */
+function external_content_update_9002() {
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $entity_field_manager = \Drupal::service('entity_field.manager');
+  $database = \Drupal::database();
+
+  // Get all field storage configurations for external_content_item fields.
+  $field_storage_configs = \Drupal::entityTypeManager()
+    ->getStorage('field_storage_config')
+    ->loadByProperties(['type' => 'external_content_item']);
+
+  foreach ($field_storage_configs as $field_storage) {
+    $table_name = $entity_type_manager->getStorage($field_storage->getTargetEntityTypeId())
+      ->getTableMapping()
+      ->getFieldTableName($field_storage->getName());
+
+    $revision_table_name = $entity_type_manager->getStorage($field_storage->getTargetEntityTypeId())
+      ->getTableMapping()
+      ->getFieldRevisionTableName($field_storage->getName());
+
+    $field_name = $field_storage->getName();
+    $uuid_column = $field_name . '_uuid';
+
+    // Drop the UUID column from the main field table if it exists.
+    if ($database->schema()->tableExists($table_name) &&
+        $database->schema()->fieldExists($table_name, $uuid_column)) {
+      $database->schema()->dropField($table_name, $uuid_column);
+      \Drupal::logger('external_content')->info('Dropped UUID column from table @table', ['@table' => $table_name]);
+    }
+
+    // Drop the UUID column from the revision table if it exists.
+    if ($database->schema()->tableExists($revision_table_name) &&
+        $database->schema()->fieldExists($revision_table_name, $uuid_column)) {
+      $database->schema()->dropField($revision_table_name, $uuid_column);
+      \Drupal::logger('external_content')->info('Dropped UUID column from revision table @table', ['@table' => $revision_table_name]);
+    }
+  }
+
+  // Clear field definition cache to ensure the schema changes are recognized.
+  $entity_field_manager->clearCachedFieldDefinitions();
+
+  return t('Removed deprecated UUID field from external_content_item field type schema.');
+}

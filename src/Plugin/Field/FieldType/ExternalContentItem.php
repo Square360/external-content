@@ -72,9 +72,6 @@ class ExternalContentItem extends FieldItemBase {
     $properties['target_id'] = DataDefinition::create('string')
       ->setLabel(t('Target ID'))
       ->setRequired(TRUE);
-    $properties['uuid'] = DataDefinition::create('string')
-      ->setLabel(t('UUID'))
-      ->setRequired(FALSE);
     $properties['source'] = DataDefinition::create('string')
       ->setLabel(t('Source'))
       ->setRequired(TRUE);
@@ -94,7 +91,6 @@ class ExternalContentItem extends FieldItemBase {
     $constraint_manager = \Drupal::typedDataManager()->getValidationConstraintManager();
 
     $options['target_id']['Length']['max'] = 32;
-    $options['uuid']['Length']['max'] = 32;
     $options['title']['Length']['max'] = 255;
 
     $constraints[] = $constraint_manager->create('ComplexData', $options);
@@ -112,12 +108,6 @@ class ExternalContentItem extends FieldItemBase {
         'length' => 255,
         'not null' => FALSE,
         'description' => 'ID of selected target',
-      ],
-      'uuid' => [
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => FALSE,
-        'description' => 'UUID of selected target',
       ],
       'source' => [
         'type' => 'varchar',
