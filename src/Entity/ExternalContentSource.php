@@ -258,6 +258,20 @@ class ExternalContentSource extends ConfigEntityBase implements ExternalContentS
   }
 
   /**
+   * Gets a link to an external entity.
+   *
+   * @param mixed $entity
+   *   The entity data array.
+   *
+   * @return \Drupal\Core\Link
+   *   Link object to the external entity.
+   */
+  public function getLinkToEntity(mixed $entity): \Drupal\Core\Link {
+    $plugin = $this->getPlugin();
+    return $plugin->getLinkToEntity($entity, $this);
+  }
+
+  /**
    * Returns content cache key for this class based on method & args.
    *
    * @param string $function

@@ -36,7 +36,7 @@ trait JsonApiSourceTrait {
   /**
    * Build a Link object to an entity from JSON:API doc.
    */
-  public function getLinkToEntity(mixed $doc): Link {
+  public function getLinkToEntity(mixed $doc, $source = null): Link {
     $title = $doc['attributes']['title'] ?? $doc['attributes']['name'] ?? 'Untitled';
     $url_string = ExternalContentJsonApi::getUrlFromEntity($doc);
     $url = Url::fromUri($url_string);
@@ -59,4 +59,3 @@ trait JsonApiSourceTrait {
     return ExternalContentJsonApi::getJsonApi($endpoint, $query, $headers);
   }
 }
-

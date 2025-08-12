@@ -42,7 +42,7 @@ abstract class ExternalSourceTypePluginBase extends PluginBase implements Extern
   /**
    * {@inheritdoc}
    */
-  abstract public function getLinkToEntity(mixed $doc): Link;
+  abstract public function getLinkToEntity(mixed $doc, $source = null): Link;
 
   /**
    * Extracts the domain from a resource URL.

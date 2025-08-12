@@ -73,10 +73,12 @@ interface ExternalSourceTypeInterface {
    *
    * @param mixed $doc
    *   The document/entity data.
+   * @param \Drupal\external_content\Entity\ExternalContentSource $source
+   *   The external content source entity (optional).
    *
    * @return \Drupal\Core\Link
    *   Drupal Link object to the external entity.
    */
-  public function getLinkToEntity(mixed $doc): Link;
+  public function getLinkToEntity(mixed $doc, $source = null): Link;
 
 }
