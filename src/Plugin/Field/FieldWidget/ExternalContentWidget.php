@@ -128,14 +128,24 @@ class ExternalContentWidget extends WidgetBase {
     }
 
     $source_options = $this->getSourceOptions();
+    $has_multiple_sources = count($source_options) > 1;
 
     $element['source'] = [
       '#type' => 'select',
       '#title' => $element['#title'],
-      '#description' => $this->t('Select a source for external content.'),
+      '#description' => $this->t(
+        $has_multiple_sources ? 'Select a source for external content.'
+        : 'Only one source is available for this field.'
+      ),
+
       '#options' => $source_options,
-      '#default_value' => $items[$delta]->source ?? NULL,
-      '#ajax' => [
+      '#default_value' => $items[$delta]->source ?? array_key_first($source_options),
+      '#disabled' => !$has_multiple_sources, // Disable when only one source
+    ];
+
+    // Only add AJAX if there are multiple sources
+    if ($has_multiple_sources) {
+      $element['source']['#ajax'] = [
         'callback' => [$this, 'updateAutoCompleteSource'],
         'disable-refocus' => FALSE,
         'event' => 'change',
@@ -144,12 +154,13 @@ class ExternalContentWidget extends WidgetBase {
           'type' => 'throbber',
           'message' => $this->t('Updating autocomplete...'),
         ],
-      ],
-    ];
+      ];
+    }
 
     $default_source = $items[$delta]->source ?? array_key_first($source_options);
 
     $element['search'] = [
+      '#title' => NULL, // No title on search field since source field has the title
       '#description' => $this->getSetting('allow_multiple_values')
         ? $this->t("Select item from external content. For multiple values, you can separate with commas.")
         : $this->t("Select a single item from external content. Multiple values will be ignored"),
