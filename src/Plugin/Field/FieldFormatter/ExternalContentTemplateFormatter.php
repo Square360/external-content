@@ -35,11 +35,13 @@ class ExternalContentTemplateFormatter extends ExternalContentFormatterBase {
       $sourcePlugin = $source->getPlugin();
       $parsedData = $sourcePlugin->parseContent($originalData);
 
+      $field_name = $items->getFieldDefinition()->getName();
       $render_children = [];
       foreach ($parsedData as $entity) {
         $render_children[] = [
           '#theme' => 'external_content',
           '#doc' => $entity,
+          '#field' => $field_name,
           '#link' => $sourcePlugin->getLinkToEntity($entity),
           '#response' => $originalData,
           '#source_id' => $source_id,

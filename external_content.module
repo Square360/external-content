@@ -16,6 +16,7 @@ function external_content_theme($existing, $type, $theme, $path) {
     'external_content' => [
       'variables' => [
         'doc' => NULL,
+        'field' => NULL,
         'link' => NULL,
         'response' => NULL,
         'source_id' => NULL,
@@ -38,6 +39,7 @@ function external_content_theme_suggestions_external_content(array $variables) {
     'external_content',
     'external_content__' . $source->getId(),
     'external_content__' . $source->getType(),
+    'external_content__' . $variables['field']
   ];
   return $suggestions;
 }
