@@ -16,6 +16,7 @@ use Drupal\Core\TypedData\DataDefinition;
  *   id = "external_content_item",
  *   label = @Translation("External Content"),
  *   category = @Translation("Reference"),
+ *   description = @Translation("A field that references content from an external source."),
  *   default_widget = "external_content_default",
  *   default_formatter = "external_content_preview"
  * )
