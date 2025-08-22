@@ -135,7 +135,7 @@ class ExternalContentWidget extends WidgetBase {
       '#title' => $element['#title'],
       '#description' => $this->t(
         $has_multiple_sources ? 'Select a source for external content.'
-        : 'Only one source is available for this field.'
+        : ''
       ),
 
       '#options' => $source_options,
@@ -159,11 +159,17 @@ class ExternalContentWidget extends WidgetBase {
 
     $default_source = $items[$delta]->source ?? array_key_first($source_options);
 
+    // Get field description from configuration, or use default descriptions
+    $field_description = $this->fieldDefinition->getDescription();
+    $search_description = !empty($field_description)
+      ? $field_description
+      : ($this->getSetting('allow_multiple_values')
+          ? $this->t("Select an item from external content. For multiple values, you can separate with commas.")
+          : $this->t("Select a single item from external content. Multiple values will be ignored"));
+
     $element['search'] = [
       '#title' => NULL, // No title on search field since source field has the title
-      '#description' => $this->getSetting('allow_multiple_values')
-        ? $this->t("Select item from external content. For multiple values, you can separate with commas.")
-        : $this->t("Select a single item from external content. Multiple values will be ignored"),
+      '#description' => $search_description,
       '#type' => 'textfield',
       '#prefix' => '<div id="' . $ajax_wrapper_id . '">',
       '#suffix' => '</div>',
@@ -175,6 +181,7 @@ class ExternalContentWidget extends WidgetBase {
       '#default_value' => $default_value,
       '#cache' => ['max-age' => 0],
     ];
+
 
     return $element;
   }
