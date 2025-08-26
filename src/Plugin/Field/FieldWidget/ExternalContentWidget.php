@@ -171,6 +171,7 @@ class ExternalContentWidget extends WidgetBase {
       '#title' => NULL, // No title on search field since source field has the title
       '#description' => $search_description,
       '#type' => 'textfield',
+      '#maxlength' => 2048,
       '#prefix' => '<div id="' . $ajax_wrapper_id . '">',
       '#suffix' => '</div>',
       '#autocomplete_route_name' => 'external_content.autocomplete',
