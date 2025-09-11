@@ -85,19 +85,15 @@ class ExternalContentAutocompleteController extends ControllerBase {
 
       if ($plugin_type) {
         try {
-          // Load the plugin manager and create the plugin instance.
+          // Load the plugin manager and create the plugin instance
           $plugin_manager = \Drupal::service('plugin.manager.external_source_type');
           $plugin = $plugin_manager->createInstance($plugin_type);
 
-          // Delegate autocomplete handling to the plugin.
+          // Delegate autocomplete handling to the plugin
           $results = $plugin->handleAutocomplete($source, $input);
-
-          // Filter out characters from keys and values.
-          $safe_results = [];
-          foreach ($results as $key => $value) {
-            $clean_key = str_replace([',', '(', ')'], '', $key);
-            $clean_value = is_string($value) ? str_replace(',', '', $value) : $value;
-            $safe_results[$clean_key] = $clean_value;
+          foreach ($results as $key => &$result) {
+            $results[$key]['value'] = str_replace(',', '', $result['value']);
+            $results[$key]['label'] = str_replace(',', '', $result['label']);
           }
         } catch (\Exception $e) {
           // Log the error and return empty results
@@ -109,7 +105,7 @@ class ExternalContentAutocompleteController extends ControllerBase {
       }
     }
 
-    return new JsonResponse($safe_results);
+    return new JsonResponse($results);
   }
 
 }

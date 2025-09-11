@@ -35,8 +35,6 @@ class ExternalContentSourceForm extends EntityForm {
       $type_options[$plugin_id] = $definition['label'];
     }
 
-//    xdebug_break();
-
     $form['type'] = [
       '#type' => 'select',
       '#title' => $this->t('Type'),
