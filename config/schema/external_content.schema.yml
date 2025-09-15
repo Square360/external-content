@@ -2,12 +2,12 @@ external_content.external_content_source.*:
   type: config_entity
   label: external_content_source
   mapping:
+    type:
+      type: string
+      label: 'Type'
     id:
       type: string
       label: 'ID'
-    label:
-      type: label
-      label: 'Label'
     resource:
       type: string
       label: 'Resource'
@@ -23,6 +23,9 @@ external_content.external_content_source.*:
     cache_timeout:
       type: integer
       label: 'Cache Timeout'
+    plugin_configuration:
+      type: mapping
+      label: 'Plugin Configuration'
 
 field.field_settings.external_content_item:
   type: mapping

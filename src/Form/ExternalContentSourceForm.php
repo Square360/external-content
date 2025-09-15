@@ -4,6 +4,7 @@ namespace Drupal\external_content\Form;
 
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 
 /**
  * External Content Source form.
@@ -11,6 +12,8 @@ use Drupal\Core\Form\FormStateInterface;
  * @property \Drupal\external_content\ExternalContentSourceInterface $entity
  */
 class ExternalContentSourceForm extends EntityForm {
+
+  use StringTranslationTrait;
 
   /**
    * {@inheritdoc}
@@ -23,6 +26,31 @@ class ExternalContentSourceForm extends EntityForm {
      * @var \Drupal\external_content\Entity\ExternalContentSource
      */
     $source = $this->entity;
+
+    // Get available external source types from the plugin manager.
+    $sourceTypePluginManager = \Drupal::service('plugin.manager.external_source_type');
+    $plugin_definitions = $sourceTypePluginManager->getDefinitions();
+    $type_options = [];
+    foreach ($plugin_definitions as $plugin_id => $definition) {
+      $type_options[$plugin_id] = $definition['label'];
+    }
+
+    $form['type'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Type'),
+      '#options' => $type_options,
+      '#default_value' => $source->getType(),
+      '#description' => $this->t('Select the external source type.'),
+      '#required' => TRUE,
+      '#empty_option' => $this->t('- Select a type -'),
+      '#ajax' => [
+        'callback' => '::typeConfigCallback',
+        'wrapper' => 'type-config-container',
+        'method' => 'replace',
+        'effect' => 'fade',
+      ],
+    ];
+
 
     $form['label'] = [
       '#type' => 'textfield',
@@ -52,34 +80,6 @@ class ExternalContentSourceForm extends EntityForm {
       '#required' => TRUE,
     ];
 
-    $form['term_resource'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Term Resource (Optional)'),
-      '#maxlength' => 255,
-      '#default_value' => $source->getTermResource(),
-      '#description' => $this->t("Resource from which to select filterable terms."),
-      '#required' => FALSE,
-    ];
-
-    $form['term_field'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Term Field (Optional)'),
-      '#maxlength' => 255,
-      '#default_value' => $source->getTermField(),
-      '#description' => $this->t("Add a field name to determine which entity field on which to filter by term."),
-      '#required' => FALSE,
-    ];
-
-    $form['includes'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('JSONAPI Includes'),
-      '#default_value' => $source->getIncludes(),
-      '#description' => $this->t(
-        "JSONAPI 'includes' to request related data along with entity"
-      ),
-      '#required' => FALSE,
-    ];
-
     $form['cache_timeout'] = [
       '#type' => 'number',
       '#min' => 0,
@@ -92,13 +92,75 @@ class ExternalContentSourceForm extends EntityForm {
       '#required' => TRUE,
     ];
 
+    // Type-specific configuration container
+    $form['type_config'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Source Specific Configuration'),
+      '#prefix' => '<div id="type-config-container">',
+      '#suffix' => '</div>',
+      '#description' => $this->t('Configuration options for the selected source type.'),
+      '#states' => [
+        'visible' => [
+          ':input[name="type"]' => ['!value' => ''],
+        ],
+      ],
+    ];
+
+    // Load type-specific configuration
+    $selected_type = $form_state->getValue('type') ?: $source->getType();
+    if ($selected_type && isset($type_options[$selected_type])) {
+      try {
+        $plugin = $sourceTypePluginManager->createInstance($selected_type);
+
+        // Get existing plugin configuration from the entity
+        $plugin_configuration = $source->getPluginConfiguration() ?: [];
+
+        // Let the plugin modify the form
+        $plugin->externalSourceConfigForm($form['type_config'], $plugin_configuration);
+      } catch (\Exception $e) {
+        $form['type_config']['error'] = [
+          '#markup' => $this->t('Error loading configuration for type: @type', ['@type' => $selected_type]),
+        ];
+      }
+    }
+
     return $form;
+  }
+
+  /**
+   * AJAX callback for type configuration.
+   */
+  public function typeConfigCallback(array &$form, FormStateInterface $form_state) {
+    return $form['type_config'];
   }
 
   /**
    * {@inheritdoc}
    */
   public function save(array $form, FormStateInterface $form_state) {
+    // Save plugin configuration if a type is selected
+    $selected_type = $form_state->getValue('type');
+    if ($selected_type) {
+      $plugin_manager = \Drupal::service('plugin.manager.external_source_type');
+      try {
+
+        // Extract plugin configuration from form values
+        $plugin_configuration = [];
+        if (isset($form['type_config']) && is_array($form['type_config'])) {
+          foreach ($form['type_config'] as $key => $element) {
+            if (strpos($key, '#') !== 0 && $form_state->hasValue($key)) {
+              $plugin_configuration[$key] = $form_state->getValue($key);
+            }
+          }
+        }
+
+        // Store plugin configuration in the entity
+        $this->entity->set('plugin_configuration', $plugin_configuration);
+      } catch (\Exception $e) {
+        $this->messenger()->addError($this->t('Error saving plugin configuration: @error', ['@error' => $e->getMessage()]));
+      }
+    }
+
     $result = parent::save($form, $form_state);
     $message_args = [
       '%label' => $this->entity->label(),

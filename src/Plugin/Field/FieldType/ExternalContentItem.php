@@ -16,6 +16,7 @@ use Drupal\Core\TypedData\DataDefinition;
  *   id = "external_content_item",
  *   label = @Translation("External Content"),
  *   category = @Translation("Reference"),
+ *   description = @Translation("A field that references content from an external source."),
  *   default_widget = "external_content_default",
  *   default_formatter = "external_content_preview"
  * )
@@ -72,9 +73,6 @@ class ExternalContentItem extends FieldItemBase {
     $properties['target_id'] = DataDefinition::create('string')
       ->setLabel(t('Target ID'))
       ->setRequired(TRUE);
-    $properties['uuid'] = DataDefinition::create('string')
-      ->setLabel(t('UUID'))
-      ->setRequired(FALSE);
     $properties['source'] = DataDefinition::create('string')
       ->setLabel(t('Source'))
       ->setRequired(TRUE);
@@ -93,11 +91,10 @@ class ExternalContentItem extends FieldItemBase {
     $constraints = parent::getConstraints();
     $constraint_manager = \Drupal::typedDataManager()->getValidationConstraintManager();
 
-    $options['target_id']['Length']['max'] = 32;
-    $options['uuid']['Length']['max'] = 32;
-    $options['title']['Length']['max'] = 255;
+    // No length constraints needed for TEXT fields
+    // Removed target_id and title length constraints since they are now TEXT fields
 
-    $constraints[] = $constraint_manager->create('ComplexData', $options);
+    $constraints[] = $constraint_manager->create('ComplexData', []);
     return $constraints;
   }
 
@@ -108,16 +105,10 @@ class ExternalContentItem extends FieldItemBase {
 
     $columns = [
       'target_id' => [
-        'type' => 'varchar',
-        'length' => 255,
+        'type' => 'text',
+        'size' => 'normal',
         'not null' => FALSE,
         'description' => 'ID of selected target',
-      ],
-      'uuid' => [
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => FALSE,
-        'description' => 'UUID of selected target',
       ],
       'source' => [
         'type' => 'varchar',
@@ -126,8 +117,8 @@ class ExternalContentItem extends FieldItemBase {
         'description' => 'Source of selection.',
       ],
       'title' => [
-        'type' => 'varchar',
-        'length' => 255,
+        'type' => 'text',
+        'size' => 'normal',
         'not null' => FALSE,
         'description' => 'Label of target item.',
       ],

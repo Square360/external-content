@@ -11,12 +11,13 @@ use Drupal\external_content\ExternalContentJsonApi;
  * Implements hook_theme().
  */
 function external_content_theme($existing, $type, $theme, $path) {
-
   $items = [
     'external_content' => [
       'variables' => [
         'doc' => NULL,
-        'jsonapi' => NULL,
+        'field' => NULL,
+        'link' => NULL,
+        'response' => NULL,
         'source_id' => NULL,
         'source' => NULL,
       ],
@@ -33,14 +34,13 @@ function external_content_theme($existing, $type, $theme, $path) {
 function external_content_theme_suggestions_external_content(array $variables) {
   /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
   $source = $variables['source'];
-  $entity_type = str_replace('-', '_', $variables["doc"]["type"]);
   $suggestions = [
     'external_content',
     'external_content__' . $source->getId(),
-    'external_content__' . $entity_type,
+    'external_content__' . $source->getType(),
+    'external_content__' . $variables['field'],
   ];
   return $suggestions;
-
 }
 
 /**
@@ -49,16 +49,11 @@ function external_content_theme_suggestions_external_content(array $variables) {
 function template_preprocess_external_content(&$variables) {
   /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
   $source = $variables['source'];
-  $site_url = ExternalContentJsonApi::getSiteFromUrl($source->getResource());
-  $variables['external_url'] = ExternalContentJsonApi::getUrlFromEntity($variables['doc']);
-  $variables['external_link'] = ExternalContentJsonApi::getLinkFromEntity($variables['doc']);
-  $variables['external_site'] = $site_url;
-  $variables['external_type'] = $variables["doc"]["type"];
+  $plugin_id = $source->getType();
 
   $variables['attributes']['class'] = [
     'external-content',
-    'external-content--' . $source->getId(),
-    'external-content--' . $variables["doc"]["type"],
+    'external-content--' . $source->id(),
+    'external-content--' . $plugin_id,
   ];
-
 }

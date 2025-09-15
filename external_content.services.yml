@@ -1,0 +1,4 @@
+services:
+  plugin.manager.external_source_type:
+    class: Drupal\external_content\ExternalSourceTypePluginManager
+    parent: default_plugin_manager

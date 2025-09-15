@@ -32,12 +32,14 @@ class ExternalContentPreviewFormatter extends ExternalContentFormatterBase {
       $storage = $this->entityTypeManager->getStorage('external_content_source');
       /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
       $source = $storage->load($source_id);
+      $plugin = $source->getPlugin();
       $label = $source->getLabel();
       $data = $source->getContent($id, $this->getSetting('limit'));
+      $parsedData = $plugin->parseContent($data);
 
-      $links = array_map(function ($item) {
-        return ExternalContentJsonApi::getLinkFromEntity($item);
-      }, $data['data']);
+      $links = array_map(function ($item) use ($plugin) {
+        return $plugin->getLinkToEntity($item);
+      }, $parsedData);
 
       $element[$delta] = [
         [

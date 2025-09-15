@@ -7,7 +7,7 @@ entity.external_content_source.collection:
     _permission: 'administer external_content_source'
 
 entity.external_content_source.add_form:
-  path: '/admin/config/services/external_content_source/add'
+  path: '/admin/config/services/external_content_sources/add'
   defaults:
     _entity_form: 'external_content_source.add'
     _title: 'Add an External Content Source'
@@ -15,15 +15,22 @@ entity.external_content_source.add_form:
     _permission: 'administer external_content_source'
 
 entity.external_content_source.edit_form:
-  path: '/admin/config/services/external-content-source/{external_content_source}'
+  path: '/admin/config/services/external_content_sources/{external_content_source}'
   defaults:
     _entity_form: 'external_content_source.edit'
     _title: 'Edit an External Content Source'
   requirements:
     _permission: 'administer external_content_source'
+  options:
+    _admin_route: TRUE
+    parameters:
+      external_content_source:
+        type: entity:external_content_source
+    breadcrumb:
+      parent: entity.external_content_source.collection
 
 entity.external_content_source.delete_form:
-  path: '/admin/config/services/external-content-source/{external_content_source}/delete'
+  path: '/admin/config/services/external_content_sources/{external_content_source}/delete'
   defaults:
     _entity_form: 'external_content_source.delete'
     _title: 'Delete an External Content Source'

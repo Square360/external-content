@@ -1,0 +1,213 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the external_content module.
+ */
+
+use Drupal\external_content\Entity\ExternalContentSource;
+
+/**
+ * Migrate term_resource, term_field, and includes fields to plugin_configuration.
+ */
+function external_content_update_9001() {
+  $config_factory = \Drupal::configFactory();
+  $external_content_sources = $config_factory->listAll('external_content.external_content_source.');
+
+  foreach ($external_content_sources as $config_name) {
+    $config = $config_factory->getEditable($config_name);
+    $data = $config->getRawData();
+
+    // Get the current field values
+    $term_resource = $data['term_resource'] ?? '';
+    $term_field = $data['term_field'] ?? '';
+    $includes = $data['includes'] ?? '';
+
+    // Set the plugin type based on whether term_resource has a value
+    $plugin_type = !empty($term_resource) ? 'jsonapi_term' : 'jsonapi_title';
+    $config->set('type', $plugin_type);
+
+    // Only migrate if we have values to migrate
+    if (!empty($term_resource) || !empty($term_field) || !empty($includes)) {
+      // Get existing plugin configuration or create empty array
+      $plugin_configuration = $data['plugin_configuration'] ?? [];
+
+      // Move the fields into plugin_configuration
+      if (!empty($term_resource)) {
+        $plugin_configuration['term_resource'] = $term_resource;
+      }
+      if (!empty($term_field)) {
+        $plugin_configuration['term_field'] = $term_field;
+      }
+      if (!empty($includes)) {
+        $plugin_configuration['includes'] = $includes;
+      }
+
+      // Update the configuration
+      $config->set('plugin_configuration', $plugin_configuration);
+    }
+
+    // Remove the old fields from the main configuration
+    $config->clear('term_resource');
+    $config->clear('term_field');
+    $config->clear('includes');
+
+    // Save the configuration
+    $config->save();
+
+    \Drupal::logger('external_content')->info('Migrated configuration for external content source: @name with type: @type', [
+      '@name' => str_replace('external_content.external_content_source.', '', $config_name),
+      '@type' => $plugin_type
+    ]);
+  }
+
+  return t('Migrated term_resource, term_field, and includes fields to plugin_configuration and set appropriate plugin types for all external content sources.');
+}
+
+/**
+ * Remove deprecated UUID field from external_content_item field type.
+ */
+function external_content_update_9002() {
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $entity_field_manager = \Drupal::service('entity_field.manager');
+  $database = \Drupal::database();
+
+  // Get all field storage configurations for external_content_item fields.
+  $field_storage_configs = \Drupal::entityTypeManager()
+    ->getStorage('field_storage_config')
+    ->loadByProperties(['type' => 'external_content_item']);
+
+  foreach ($field_storage_configs as $field_storage) {
+    $entity_type_id = $field_storage->getTargetEntityTypeId();
+    $field_name = $field_storage->getName();
+
+    // Get table mapping for the entity type
+    $storage = $entity_type_manager->getStorage($entity_type_id);
+    $table_mapping = $storage->getTableMapping();
+
+    $table_name = $table_mapping->getFieldTableName($field_name);
+    $uuid_column = $field_name . '_uuid';
+
+    // Drop the UUID column from the main field table if it exists.
+    if ($database->schema()->tableExists($table_name) &&
+        $database->schema()->fieldExists($table_name, $uuid_column)) {
+      $database->schema()->dropField($table_name, $uuid_column);
+      \Drupal::logger('external_content')->info('Dropped UUID column from table @table', ['@table' => $table_name]);
+    }
+
+    // Handle revision tables if the entity type supports revisions
+    $entity_type = $entity_type_manager->getDefinition($entity_type_id);
+    if ($entity_type->isRevisionable()) {
+      // For revisionable entities, get the revision table name
+      $revision_table_name = $table_mapping->getDedicatedRevisionTableName($field_storage);
+
+      // Drop the UUID column from the revision table if it exists.
+      if ($database->schema()->tableExists($revision_table_name) &&
+          $database->schema()->fieldExists($revision_table_name, $uuid_column)) {
+        $database->schema()->dropField($revision_table_name, $uuid_column);
+        \Drupal::logger('external_content')->info('Dropped UUID column from revision table @table', ['@table' => $revision_table_name]);
+      }
+    }
+  }
+
+  // Clear field definition cache to ensure the schema changes are recognized.
+  $entity_field_manager->clearCachedFieldDefinitions();
+
+  return t('Removed deprecated UUID field from external_content_item field type schema.');
+}
+
+/**
+ * Convert target_id and title fields from VARCHAR to TEXT type.
+ */
+function external_content_update_9003() {
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $entity_field_manager = \Drupal::service('entity_field.manager');
+  $database = \Drupal::database();
+
+  // Get all field storage configurations for external_content_item fields.
+  $field_storage_configs = \Drupal::entityTypeManager()
+    ->getStorage('field_storage_config')
+    ->loadByProperties(['type' => 'external_content_item']);
+
+  foreach ($field_storage_configs as $field_storage) {
+    $entity_type_id = $field_storage->getTargetEntityTypeId();
+    $field_name = $field_storage->getName();
+
+    // Get table mapping for the entity type
+    $storage = $entity_type_manager->getStorage($entity_type_id);
+    $table_mapping = $storage->getTableMapping();
+
+    $table_name = $table_mapping->getFieldTableName($field_name);
+
+    $target_id_column = $field_name . '_target_id';
+    $title_column = $field_name . '_title';
+
+    // Convert target_id column from VARCHAR to TEXT in main table
+    if ($database->schema()->tableExists($table_name) &&
+        $database->schema()->fieldExists($table_name, $target_id_column)) {
+
+      $database->schema()->changeField($table_name, $target_id_column, $target_id_column, [
+        'type' => 'text',
+        'size' => 'normal',
+        'not null' => FALSE,
+        'description' => 'ID of selected target',
+      ]);
+
+      \Drupal::logger('external_content')->info('Converted target_id column to TEXT in table @table', ['@table' => $table_name]);
+    }
+
+    // Convert title column from VARCHAR to TEXT in main table
+    if ($database->schema()->tableExists($table_name) &&
+        $database->schema()->fieldExists($table_name, $title_column)) {
+
+      $database->schema()->changeField($table_name, $title_column, $title_column, [
+        'type' => 'text',
+        'size' => 'normal',
+        'not null' => FALSE,
+        'description' => 'Label of target item.',
+      ]);
+
+      \Drupal::logger('external_content')->info('Converted title column to TEXT in table @table', ['@table' => $table_name]);
+    }
+
+    // Handle revision tables if the entity type supports revisions
+    $entity_type = $entity_type_manager->getDefinition($entity_type_id);
+    if ($entity_type->isRevisionable()) {
+      // For revisionable entities, get the revision table name
+      $revision_table_name = $table_mapping->getDedicatedRevisionTableName($field_storage);
+
+      // Convert target_id column from VARCHAR to TEXT in revision table
+      if ($database->schema()->tableExists($revision_table_name) &&
+          $database->schema()->fieldExists($revision_table_name, $target_id_column)) {
+
+        $database->schema()->changeField($revision_table_name, $target_id_column, $target_id_column, [
+          'type' => 'text',
+          'size' => 'normal',
+          'not null' => FALSE,
+          'description' => 'ID of selected target',
+        ]);
+
+        \Drupal::logger('external_content')->info('Converted target_id column to TEXT in revision table @table', ['@table' => $revision_table_name]);
+      }
+
+      // Convert title column from VARCHAR to TEXT in revision table
+      if ($database->schema()->tableExists($revision_table_name) &&
+          $database->schema()->fieldExists($revision_table_name, $title_column)) {
+
+        $database->schema()->changeField($revision_table_name, $title_column, $title_column, [
+          'type' => 'text',
+          'size' => 'normal',
+          'not null' => FALSE,
+          'description' => 'Label of target item.',
+        ]);
+
+        \Drupal::logger('external_content')->info('Converted title column to TEXT in revision table @table', ['@table' => $revision_table_name]);
+      }
+    }
+  }
+
+  // Clear field definition cache to ensure the schema changes are recognized.
+  $entity_field_manager->clearCachedFieldDefinitions();
+
+  return t('Converted target_id and title fields from VARCHAR to TEXT type in external_content_item field tables.');
+}

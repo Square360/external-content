@@ -79,41 +79,30 @@ class ExternalContentAutocompleteController extends ControllerBase {
     $source = $storage->load($source_id);
 
     // Get the typed string from the URL, if it exists.
-    if ($input) {
+    if ($input && $source) {
+      // Get the plugin type from the source
+      $plugin_type = $source->getType();
 
-      $jsonapi = new ExternalContentJsonApi();
-      $endpoint = $source->getResource();
+      if ($plugin_type) {
+        try {
+          // Load the plugin manager and create the plugin instance
+          $plugin_manager = \Drupal::service('plugin.manager.external_source_type');
+          $plugin = $plugin_manager->createInstance($plugin_type);
 
-      $endpoint = $source->getLookupResource();
-      $query = $source->getLookupQuery($input);
-      $json = $jsonapi->getJsonApi($endpoint, $query)['data'];
-
-      if ($json !== FALSE) {
-
-        foreach ($json as $result) {
-          $drupal_id = !empty($result['attributes']['drupal_internal__nid'])
-            ? $result['attributes']['drupal_internal__nid']
-            : $result['attributes']['drupal_internal__tid'];
-          $title = !empty($result['attributes']['title'])
-            ? $result['attributes']['title']
-            : $result['attributes']['name'];
-          $results[] = [
-            'value' => "$title ($drupal_id)",
-            'label' => "$title ($drupal_id)",
-          ];
+          // Delegate autocomplete handling to the plugin
+          $results = $plugin->handleAutocomplete($source, $input);
+          foreach ($results as $key => &$result) {
+            $results[$key]['value'] = str_replace(',', '', $result['value']);
+            $results[$key]['label'] = str_replace(',', '', $result['label']);
+          }
+        } catch (\Exception $e) {
+          // Log the error and return empty results
+          \Drupal::logger('external_content')->error('Error in autocomplete for source @source_id: @error', [
+            '@source_id' => $source_id,
+            '@error' => $e->getMessage(),
+          ]);
         }
       }
-    }
-
-    if (!$source->isTermResource()) {
-      if (stripos('Most recent item', $input) !== FALSE) {
-        $val = $this->t('Most recent item(s) (:id)', [':id' => -1]);
-        array_unshift($results, [
-          'value' => $val,
-          'label' => $val,
-        ]);
-      }
-
     }
 
     return new JsonResponse($results);
