@@ -129,8 +129,9 @@ class ExternalContentJsonApi {
    *   A JSON array
    */
   public static function getJsonApi($endpoint, array $query = [], array $headers = []) {
-    $query_str = UrlHelper::buildQuery($query);
-    $query_str = preg_replace('/%5B[0-9]+%5D/simU', '', $query_str);
+    // Use http_build_query directly to preserve array brackets (value[1]=1&value[2]=2)
+    // UrlHelper::buildQuery() removes the brackets by default (value=1&value=2)
+    $query_str = http_build_query($query, '', '&', PHP_QUERY_RFC3986);
 
     // This allows for custom arguments to be added onto the endpoints.
     if (str_contains($endpoint, '?')) {
