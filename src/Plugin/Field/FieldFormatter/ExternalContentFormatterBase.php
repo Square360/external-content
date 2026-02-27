@@ -93,4 +93,27 @@ abstract class ExternalContentFormatterBase extends FormatterBase {
     return $summary;
   }
 
+  /**
+   * Get the effective limit for fetching content.
+   *
+   * @param \Drupal\Core\Field\FieldItemInterface $item
+   *   The field item.
+   *
+   * @return int
+   *   The limit to use when fetching content.
+   */
+  protected function getEffectiveLimit($item) {
+    $formatter_limit = $this->getSetting('limit');
+    $item_quantity = $item->quantity;
+
+    // If quantity is not set, use formatter limit.
+    if ($item_quantity === NULL) {
+      return $formatter_limit;
+    }
+
+    // Use the minimum of quantity and formatter limit.
+    // This ensures formatter limit acts as a cap.
+    return min($item_quantity, $formatter_limit);
+  }
+
 }

@@ -183,6 +183,25 @@ class ExternalContentWidget extends WidgetBase {
       '#cache' => ['max-age' => 0],
     ];
 
+    // Add quantity field if enabled.
+    if ($this->getSetting('enable_quantity')) {
+      $max_quantity = $this->getSetting('max_quantity');
+
+      $element['quantity'] = [
+        '#type' => 'number',
+        '#title' => $this->t('Quantity'),
+        '#description' => $max_quantity > 0
+          ? $this->t('Number of items to fetch (max: @max)', ['@max' => $max_quantity])
+          : $this->t('Number of items to fetch'),
+        '#default_value' => $items[$delta]->quantity ?? 1,
+        '#min' => 1,
+        '#required' => FALSE,
+      ];
+
+      if ($max_quantity > 0) {
+        $element['quantity']['#max'] = $max_quantity;
+      }
+    }
 
     return $element;
   }
@@ -319,6 +338,8 @@ class ExternalContentWidget extends WidgetBase {
   public static function defaultSettings() {
     return [
       'allow_multiple_values' => FALSE,
+      'enable_quantity' => FALSE,
+      'max_quantity' => 10,
     ] + parent::defaultSettings();
   }
 
@@ -335,6 +356,26 @@ class ExternalContentWidget extends WidgetBase {
       '#description' => $this->t('When enabled, the widget will accept multiple values separated by commas in the format: "label (id), label (id), ..."'),
     ];
 
+    $elements['enable_quantity'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Enable quantity selection'),
+      '#default_value' => $this->getSetting('enable_quantity'),
+      '#description' => $this->t('Allow content authors to specify how many items to fetch from the external source.'),
+    ];
+
+    $elements['max_quantity'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Maximum quantity'),
+      '#default_value' => $this->getSetting('max_quantity'),
+      '#min' => 0,
+      '#description' => $this->t('Maximum number of items authors can request. Set to 0 for unlimited.'),
+      '#states' => [
+        'visible' => [
+          ':input[name="fields[' . $this->fieldDefinition->getName() . '][settings_edit_form][settings][enable_quantity]"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+
     return $elements;
   }
 
@@ -349,6 +390,13 @@ class ExternalContentWidget extends WidgetBase {
     }
     else {
       $summary[] = $this->t('Single value only');
+    }
+
+    if ($this->getSetting('enable_quantity')) {
+      $max = $this->getSetting('max_quantity');
+      $summary[] = $this->t('Quantity enabled (max: @max)', [
+        '@max' => $max == 0 ? $this->t('unlimited') : $max,
+      ]);
     }
 
     return $summary;

@@ -30,7 +30,9 @@ class ExternalContentTemplateFormatter extends ExternalContentFormatterBase {
       /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
       $source = $storage->load($source_id);
 
-      $originalData = $source->getContent($id, $this->getSetting('limit'));
+      // Use effective limit instead of just formatter setting.
+      $limit = $this->getEffectiveLimit($item);
+      $originalData = $source->getContent($id, $limit);
 
       $sourcePlugin = $source->getPlugin();
       $parsedData = $sourcePlugin->parseContent($originalData);

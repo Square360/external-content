@@ -43,7 +43,9 @@ class ExternalContentJsonFormatter extends ExternalContentFormatterBase {
     /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
     $source = $storage->load($source_id);
 
-    $data = $source->getContent($id, $this->getSetting('limit'));
+    // Use effective limit instead of just formatter setting.
+    $limit = $this->getEffectiveLimit($item);
+    $data = $source->getContent($id, $limit);
 
     return [
       '#type' => 'html_tag',

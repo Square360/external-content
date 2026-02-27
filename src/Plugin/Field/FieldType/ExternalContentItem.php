@@ -79,6 +79,10 @@ class ExternalContentItem extends FieldItemBase {
     $properties['title'] = DataDefinition::create('string')
       ->setLabel(t('Title of target at time of creation.'))
       ->setRequired(TRUE);
+    $properties['quantity'] = DataDefinition::create('integer')
+      ->setLabel(t('Quantity'))
+      ->setDescription(t('Number of items to fetch from external source'))
+      ->setRequired(FALSE);
 
     return $properties;
   }
@@ -121,6 +125,14 @@ class ExternalContentItem extends FieldItemBase {
         'size' => 'normal',
         'not null' => FALSE,
         'description' => 'Label of target item.',
+      ],
+      'quantity' => [
+        'type' => 'int',
+        'size' => 'normal',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+        'description' => 'Number of items to fetch from external source',
       ],
     ];
 

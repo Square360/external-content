@@ -25,6 +25,20 @@ New source types can be created by extending the `ExternalContentSourcePluginBas
 2. Configure **Enabled Sources** to limit available options.
 3. Choose the field cardinality, allow_multiple_values (widget) & max displayed items (formatter) to best suit the use case.
 
+### Quantity Control
+
+The widget can be configured to allow content authors to specify how many items to fetch from the external source:
+
+1. **Enable Quantity Selection**: Check this option in the field widget settings
+2. **Set Maximum Quantity**: Define an upper limit (0 = unlimited)
+3. **Author Control**: Authors will see a "Quantity" field when editing content
+
+The formatter's "limit" setting acts as a final cap on results. If both are set, the lower value is used.
+
+**Example:** Author requests 10 items, but formatter limit is 5 → displays 5 items
+
+**Note:** If quantity is not set by the author, the system will use the formatter's limit setting.
+
 ### Provided View Formatters
 - ExternalContentJsonFormatter - Displays the raw JSON data from the source for debugging.
 - ExternalContentPreviewFormatter - Displays a preview of the content which would be displayed. Intended for backend.
