@@ -34,7 +34,9 @@ class ExternalContentPreviewFormatter extends ExternalContentFormatterBase {
       $source = $storage->load($source_id);
       $plugin = $source->getPlugin();
       $label = $source->getLabel();
-      $data = $source->getContent($id, $this->getSetting('limit'));
+      // Use effective limit instead of just formatter setting.
+      $limit = $this->getEffectiveLimit($item);
+      $data = $source->getContent($id, $limit);
       $parsedData = $plugin->parseContent($data);
 
       $links = array_map(function ($item) use ($plugin) {

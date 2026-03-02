@@ -66,3 +66,18 @@ field.formatter.settings.external_content_json:
     limit:
       type: integer
       label: Limit
+
+field.widget.settings.external_content_default:
+  type: mapping
+  label: 'External content default widget settings'
+  mapping:
+    allow_multiple_values:
+      type: boolean
+      label: 'Allow multiple values'
+    enable_quantity:
+      type: boolean
+      label: 'Enable quantity selection'
+    max_quantity:
+      type: integer
+      label: 'Maximum quantity'
+

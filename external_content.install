@@ -211,3 +211,70 @@ function external_content_update_9003() {
 
   return t('Converted target_id and title fields from VARCHAR to TEXT type in external_content_item field tables.');
 }
+
+/**
+ * Add quantity column to external_content_item field tables.
+ */
+function external_content_update_9004() {
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $entity_field_manager = \Drupal::service('entity_field.manager');
+  $database = \Drupal::database();
+
+  // Get all field storage configurations for external_content_item fields.
+  $field_storage_configs = \Drupal::entityTypeManager()
+    ->getStorage('field_storage_config')
+    ->loadByProperties(['type' => 'external_content_item']);
+
+  foreach ($field_storage_configs as $field_storage) {
+    $entity_type_id = $field_storage->getTargetEntityTypeId();
+    $field_name = $field_storage->getName();
+
+    // Get table mapping for the entity type.
+    $storage = $entity_type_manager->getStorage($entity_type_id);
+    $table_mapping = $storage->getTableMapping();
+
+    $table_name = $table_mapping->getFieldTableName($field_name);
+    $quantity_column = $field_name . '_quantity';
+
+    // Add quantity column to main table.
+    if ($database->schema()->tableExists($table_name) &&
+        !$database->schema()->fieldExists($table_name, $quantity_column)) {
+      $database->schema()->addField($table_name, $quantity_column, [
+        'type' => 'int',
+        'size' => 'normal',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+        'description' => 'Number of items to fetch from external source',
+      ]);
+      \Drupal::logger('external_content')->info('Added quantity column to table @table', ['@table' => $table_name]);
+    }
+
+    // Handle revision tables if the entity type supports revisions.
+    $entity_type = $entity_type_manager->getDefinition($entity_type_id);
+    if ($entity_type->isRevisionable()) {
+      // For revisionable entities, get the revision table name.
+      $revision_table_name = $table_mapping->getDedicatedRevisionTableName($field_storage);
+
+      // Add quantity column to revision table.
+      if ($database->schema()->tableExists($revision_table_name) &&
+          !$database->schema()->fieldExists($revision_table_name, $quantity_column)) {
+        $database->schema()->addField($revision_table_name, $quantity_column, [
+          'type' => 'int',
+          'size' => 'normal',
+          'unsigned' => TRUE,
+          'not null' => FALSE,
+          'default' => NULL,
+          'description' => 'Number of items to fetch from external source',
+        ]);
+        \Drupal::logger('external_content')->info('Added quantity column to revision table @table', ['@table' => $revision_table_name]);
+      }
+    }
+  }
+
+  // Clear field definition cache to ensure the schema changes are recognized.
+  $entity_field_manager->clearCachedFieldDefinitions();
+
+  return t('Added quantity column to external_content_item field tables.');
+}
+
