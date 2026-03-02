@@ -213,9 +213,157 @@ function external_content_update_9003() {
 }
 
 /**
- * Add quantity column to external_content_item field tables.
+ * Synchronize stored field schema definitions with actual database schema.
  */
 function external_content_update_9004() {
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $entity_field_manager = \Drupal::service('entity_field.manager');
+  $database = \Drupal::database();
+  $key_value = \Drupal::keyValue('entity.storage_schema.sql');
+
+  // Get all external_content_item field storage configs.
+  $field_storage_configs = $entity_type_manager
+    ->getStorage('field_storage_config')
+    ->loadByProperties(['type' => 'external_content_item']);
+
+  foreach ($field_storage_configs as $field_storage) {
+    $entity_type_id = $field_storage->getTargetEntityTypeId();
+    $field_name = $field_storage->getName();
+
+    // Get the storage and table mapping.
+    $storage = $entity_type_manager->getStorage($entity_type_id);
+    $table_mapping = $storage->getTableMapping();
+    $table_name = $table_mapping->getFieldTableName($field_name);
+
+    // Get the current stored schema from key_value.
+    $schema_key = $entity_type_id . '.field_schema_data.' . $field_name;
+    $stored_schema = $key_value->get($schema_key);
+
+    if (!$stored_schema || !isset($stored_schema[$table_name])) {
+      \Drupal::logger('external_content')->warning('No stored schema found for @field', [
+        '@field' => $field_name,
+      ]);
+      continue;
+    }
+
+    $updated = FALSE;
+    $target_id_column = $field_name . '_target_id';
+    $title_column = $field_name . '_title';
+    $uuid_column = $field_name . '_uuid';
+
+    // Update target_id column definition to TEXT (if not already).
+    if (isset($stored_schema[$table_name]['fields'][$target_id_column])) {
+      $current = $stored_schema[$table_name]['fields'][$target_id_column];
+      if ($current['type'] !== 'text' || !isset($current['not null']) || $current['not null'] !== 0) {
+        $stored_schema[$table_name]['fields'][$target_id_column] = [
+          'type' => 'text',
+          'size' => 'normal',
+          'not null' => 0,
+          'description' => 'ID of selected target',
+        ];
+        $updated = TRUE;
+        \Drupal::logger('external_content')->info('Updated stored schema for @column to TEXT', [
+          '@column' => $target_id_column,
+        ]);
+      }
+    }
+
+    // Update title column definition to TEXT (if not already).
+    if (isset($stored_schema[$table_name]['fields'][$title_column])) {
+      $current = $stored_schema[$table_name]['fields'][$title_column];
+      if ($current['type'] !== 'text' || !isset($current['not null']) || $current['not null'] !== 0) {
+        $stored_schema[$table_name]['fields'][$title_column] = [
+          'type' => 'text',
+          'size' => 'normal',
+          'not null' => 0,
+          'description' => 'Label of target item.',
+        ];
+        $updated = TRUE;
+        \Drupal::logger('external_content')->info('Updated stored schema for @column to TEXT', [
+          '@column' => $title_column,
+        ]);
+      }
+    }
+
+    // Remove UUID column from stored schema (was removed from database by external_content_update_9002).
+    if (isset($stored_schema[$table_name]['fields'][$uuid_column])) {
+      unset($stored_schema[$table_name]['fields'][$uuid_column]);
+      $updated = TRUE;
+      \Drupal::logger('external_content')->info('Removed UUID column from stored schema for @field', [
+        '@field' => $field_name,
+      ]);
+    }
+
+    // Save the updated schema if changes were made.
+    if ($updated) {
+      $key_value->set($schema_key, $stored_schema);
+      \Drupal::logger('external_content')->info('Synchronized storage definition for @field', [
+        '@field' => $field_name,
+      ]);
+    }
+
+    // Handle revision tables if the entity type supports revisions.
+    $entity_type = $entity_type_manager->getDefinition($entity_type_id);
+    if ($entity_type->isRevisionable()) {
+      $revision_table_name = $table_mapping->getDedicatedRevisionTableName($field_storage);
+      if (isset($stored_schema[$revision_table_name])) {
+        $rev_updated = FALSE;
+
+        // Update target_id in revision table.
+        if (isset($stored_schema[$revision_table_name]['fields'][$target_id_column])) {
+          $current = $stored_schema[$revision_table_name]['fields'][$target_id_column];
+          if ($current['type'] !== 'text' || !isset($current['not null']) || $current['not null'] !== 0) {
+            $stored_schema[$revision_table_name]['fields'][$target_id_column] = [
+              'type' => 'text',
+              'size' => 'normal',
+              'not null' => 0,
+              'description' => 'ID of selected target',
+            ];
+            $rev_updated = TRUE;
+          }
+        }
+
+        // Update title in revision table.
+        if (isset($stored_schema[$revision_table_name]['fields'][$title_column])) {
+          $current = $stored_schema[$revision_table_name]['fields'][$title_column];
+          if ($current['type'] !== 'text' || !isset($current['not null']) || $current['not null'] !== 0) {
+            $stored_schema[$revision_table_name]['fields'][$title_column] = [
+              'type' => 'text',
+              'size' => 'normal',
+              'not null' => 0,
+              'description' => 'Label of target item.',
+            ];
+            $rev_updated = TRUE;
+          }
+        }
+
+        // Remove UUID column from revision table stored schema.
+        if (isset($stored_schema[$revision_table_name]['fields'][$uuid_column])) {
+          unset($stored_schema[$revision_table_name]['fields'][$uuid_column]);
+          $rev_updated = TRUE;
+        }
+
+        if ($rev_updated) {
+          $key_value->set($schema_key, $stored_schema);
+          \Drupal::logger('external_content')->info('Synchronized revision storage definition for @field', [
+            '@field' => $field_name,
+          ]);
+        }
+      }
+    }
+  }
+
+  // Clear all caches to ensure changes take effect.
+  $entity_field_manager->clearCachedFieldDefinitions();
+  drupal_flush_all_caches();
+
+  return t('Synchronized field storage definitions for external_content_item fields with actual database schema.');
+}
+
+/**
+ * Add quantity column to external_content_item field tables.
+ */
+function external_content_update_9005() {
   $entity_type_manager = \Drupal::entityTypeManager();
   $entity_field_manager = \Drupal::service('entity_field.manager');
   $database = \Drupal::database();
