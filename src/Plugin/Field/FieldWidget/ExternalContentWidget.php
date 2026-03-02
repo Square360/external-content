@@ -195,6 +195,7 @@ class ExternalContentWidget extends WidgetBase {
           : $this->t('Number of items to fetch'),
         '#default_value' => $items[$delta]->quantity ?? 1,
         '#min' => 1,
+        '#step' => 1,
         '#required' => FALSE,
       ];
 
