@@ -40,7 +40,7 @@ final class ExternalContentHooks {
     $source = $variables['source'];
     $suggestions = [
       'external_content',
-      'external_content__' . $source->getId(),
+      'external_content__' . $source->id(),
       'external_content__' . $source->getType(),
       'external_content__' . $variables['field'],
     ];
@@ -55,12 +55,21 @@ final class ExternalContentHooks {
     /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
     $source = $variables['source'];
     $plugin_id = $source->getType();
-
-    $variables['attributes']['class'] = [
+    $classes = [
       'external-content',
       'external-content--' . $source->id(),
       'external-content--' . $plugin_id,
     ];
+
+    if (($variables['attributes'] ?? NULL) instanceof \Drupal\Core\Template\Attribute) {
+      $variables['attributes']->addClass($classes);
+      return;
+    }
+
+    $variables['attributes']['class'] = array_merge(
+      (array) ($variables['attributes']['class'] ?? []),
+      $classes,
+    );
   }
 
 }
