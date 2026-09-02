@@ -3,57 +3,51 @@
 /**
  * @file
  * External Content module.
+ *
+ * Hooks are implemented as classes in src/Hook/ExternalContentHooks.php.
  */
-
-use Drupal\external_content\ExternalContentJsonApi;
 
 /**
  * Implements hook_theme().
+ *
+ * Remove on upgrade to D11.
  */
-function external_content_theme($existing, $type, $theme, $path) {
-  $items = [
-    'external_content' => [
-      'variables' => [
-        'doc' => NULL,
-        'field' => NULL,
-        'link' => NULL,
-        'response' => NULL,
-        'source_id' => NULL,
-        'source' => NULL,
-      ],
-      'template' => 'external-content',
-    ],
-  ];
+function external_content_theme(): array {
+  // Drupal 11+ discovers class-based hooks via #[Hook] attributes.
+  if (class_exists('Drupal\\Core\\Hook\\Attribute\\Hook')) {
+    return [];
+  }
 
-  return $items;
+  return (new \Drupal\external_content\Hook\ExternalContentHooks())->theme();
 }
 
 /**
  * Implements hook_theme_suggestions_HOOK().
+ *
+ * Remove on upgrade to D11.
  */
-function external_content_theme_suggestions_external_content(array $variables) {
-  /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
-  $source = $variables['source'];
-  $suggestions = [
-    'external_content',
-    'external_content__' . $source->getId(),
-    'external_content__' . $source->getType(),
-    'external_content__' . $variables['field'],
-  ];
-  return $suggestions;
+function external_content_theme_suggestions_external_content(
+  array $variables,
+): array {
+  // Drupal 11+ discovers class-based hooks via #[Hook] attributes.
+  if (class_exists('Drupal\\Core\\Hook\\Attribute\\Hook')) {
+    return [];
+  }
+
+  return (new \Drupal\external_content\Hook\ExternalContentHooks())
+    ->themeSuggestionsExternalContent($variables);
 }
 
 /**
  * Implements hook_preprocess_HOOK().
  */
-function template_preprocess_external_content(&$variables) {
-  /** @var \Drupal\external_content\Entity\ExternalContentSource $source */
-  $source = $variables['source'];
-  $plugin_id = $source->getType();
+function external_content_preprocess_external_content(array &$variables): void {
+  // Drupal 11+ discovers class-based hooks via #[Hook] attributes.
+  if (class_exists('Drupal\\Core\\Hook\\Attribute\\Hook')) {
+    return;
+  }
 
-  $variables['attributes']['class'] = [
-    'external-content',
-    'external-content--' . $source->id(),
-    'external-content--' . $plugin_id,
-  ];
+  (new \Drupal\external_content\Hook\ExternalContentHooks())
+    ->preprocessExternalContent($variables);
 }
+
